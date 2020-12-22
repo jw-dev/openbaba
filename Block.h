@@ -53,8 +53,6 @@ class Block
         u64 m_props;
     };
 
-auto initAllBlockTypes () -> void;
-auto destroyAllBlockTypes () -> void;
 Block makeBlock (BlockID id, BlockType type, int x, int y);
 
 #endif

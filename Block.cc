@@ -1,24 +1,15 @@
 #include "Block.h"
 
-static std::vector <Block> allBlocks; 
-
-auto initAllBlockTypes () -> void 
+static const std::vector <Block> allBlocks = 
     {
-    // entities
-    allBlocks.emplace_back ( BlockID::BABA, BlockType::ENTITY );
-    allBlocks.emplace_back ( BlockID::FLAG, BlockType::ENTITY );
-    // words
-    allBlocks.emplace_back ( BlockID::BABA, BlockType::WORD );
-    allBlocks.emplace_back ( BlockID::IS, BlockType::WORD );
-    allBlocks.emplace_back ( BlockID::YOU, BlockType::WORD );
-    allBlocks.emplace_back ( BlockID::FLAG, BlockType::WORD );
-    allBlocks.emplace_back ( BlockID::WIN, BlockType::WORD );
-    }
-
-auto destroyAllBlockTypes () -> void 
-    {
-    allBlocks.clear();
-    }
+    Block { BlockID::BABA, BlockType::ENTITY },
+    Block { BlockID::FLAG, BlockType::ENTITY },
+    Block { BlockID::BABA, BlockType::WORD },
+    Block { BlockID::IS, BlockType::WORD },
+    Block { BlockID::YOU, BlockType::WORD },
+    Block { BlockID::FLAG, BlockType::WORD },
+    Block { BlockID::WIN, BlockType::WORD },
+    };
 
 Block makeBlock (BlockID id, BlockType type, int x, int y)
     {

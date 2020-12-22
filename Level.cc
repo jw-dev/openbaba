@@ -2,8 +2,6 @@
 
 Level::Level (int id) 
     {
-    initAllBlockTypes ();
-
     std::ostringstream oss; 
     oss << "Data/"
         << id 

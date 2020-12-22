@@ -20,7 +20,6 @@ Level::Level (int id)
             makeBlock (BlockID::FLAG, BlockType::WORD, 1, 3),
             makeBlock (BlockID::IS, BlockType::WORD, 3, 3),
             makeBlock (BlockID::WIN, BlockType::WORD, 4, 3),
-            makeBlock (BlockID::BABA, BlockType::WORD, 4, 5),
             makeBlock (BlockID::BABA, BlockType::ENTITY, 5, 5),
             makeBlock (BlockID::FLAG, BlockType::ENTITY, 8, 8)
             };

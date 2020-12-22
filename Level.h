@@ -1,6 +1,10 @@
 #ifndef LEVEL_H
 #define LEVEL_H
 
+#include <fstream>
+#include <iostream>
+#include <sstream> 
+
 #include "Common.h"
 #include "Block.h"
 #include "Input.h"

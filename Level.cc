@@ -1,45 +1,83 @@
 #include "Level.h" 
 
-
 Level::Level (int id) 
     {
     initAllBlockTypes ();
 
-    /* TEMP UNTIL WE HAVE A LEVEL PARSER*/
-        {
-        this->id = id;
-        frames = 0U;
-        name = "DEBUG";
-        width = 10;
-        height = 10;
-        std::vector<Block> blocks2 = 
-            {
-            makeBlock (BlockID::BABA, BlockType::WORD, 1, 1),
-            makeBlock (BlockID::IS, BlockType::WORD, 2, 1),
-            makeBlock (BlockID::YOU, BlockType::WORD, 3, 1),
-            makeBlock (BlockID::FLAG, BlockType::WORD, 1, 3),
-            makeBlock (BlockID::IS, BlockType::WORD, 3, 3),
-            makeBlock (BlockID::WIN, BlockType::WORD, 4, 3),
-            makeBlock (BlockID::BABA, BlockType::ENTITY, 5, 5),
-            makeBlock (BlockID::FLAG, BlockType::ENTITY, 8, 8)
-            };
+    std::ostringstream oss; 
+    oss << "Data/"
+        << id 
+        << ".txt";
+    load ( oss.str() );
 
-        for (const auto& block: blocks2) 
-            {
-            blocks.push_back(block);
-            }
-        }
     parseRules ();
     }
 
 auto Level::load (const std::string& path) -> void
     {
-
+    std::ifstream in ( path );
+    if ( in && in.good () )
+        {
+        int theWidth; 
+        int theHeight;
+        int id; 
+        int type;
+        int x; 
+        int y; 
+        int direction;
+        in >> name;
+        in >> theWidth;
+        in >> theHeight;
+        while ( in >> id
+                   >> type
+                   >> x 
+                   >> y
+                   >> direction )
+            {
+            Block block = makeBlock ( (BlockID) id, (BlockType) type, x, y );
+            block.direction = (Direction) direction;
+            blocks.push_back ( block );
+            }
+        width = (u8) theWidth;
+        height = (u8) theHeight;
+        in.close ();
+        }
+    else 
+        {
+        throw std::runtime_error ( "unable to open/read from file" );
+        }
     }
 
 auto Level::save (const std::string& path) -> void
     {
-    
+    std::ofstream out ( path );
+    if (out && out.good ()) 
+        {
+        const int theWidth = (int) width;
+        const int theHeight = (int) height;
+        out << name << std::endl; 
+        out << theWidth << std::endl;
+        out << theHeight << std::endl;
+        for (const auto& block: blocks) 
+            {
+            out << static_cast<int>(block.id)
+                << " "
+                << (int)block.type 
+                << " "
+                << (int)block.x
+                << " "
+                << (int)block.y
+                << " "
+                << (int)block.direction
+                << std::endl;
+            }
+        out.close ();
+        }
+    else 
+        {
+        throw std::runtime_error ( "unable to open/write to file" );
+        }
+    out.close();
     }
 
 auto Level::update(Input* input) -> bool

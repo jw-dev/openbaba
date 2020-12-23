@@ -4,16 +4,30 @@ LevelDraw::LevelDraw (Window* win)
   : m_win (win)
     {
     m_animationFrame = 0U;
-    m_startTime = 0U;
     m_levelId = -1;
-    m_canvasX = 0;
-    m_canvasY = 0;
-    m_canvasWidth = 0;
-    m_canvasHeight = 0;
-    m_cellSize = 0;
-    m_words = win->openTexture (WORD_TEXTURE_PATH);
-    m_sprites = win->openTexture (SPRITE_TEXTURE_PATH);
-    m_parts = win->openTexture (PARTICLE_TEXTURE_PATH);
+    m_textures [TextureType::PARTICLES] = win->openTexture (PARTICLE_TEXTURE_PATH);
+    m_textures [TextureType::SPRITES] = win->openTexture (SPRITE_TEXTURE_PATH);
+    m_textures [TextureType::WORDS] = win->openTexture (WORD_TEXTURE_PATH);
+    }
+
+LevelDraw::~LevelDraw ()
+    {
+    for ( auto& kv: m_textures )
+        {
+        if ( kv.second )
+            {
+            SDL_DestroyTexture ( kv.second );
+            }
+        }
+    }
+
+auto LevelDraw::getTexture (TextureType type) -> SDL_Texture*
+    {
+    if ( m_textures.find(type) == m_textures.end() || m_textures.at(type) == nullptr )
+        {
+        throw std::runtime_error ( "texture has not been initialized" );
+        }
+    return m_textures.at(type);
     }
 
 auto LevelDraw::refreshCanvas ( const Level& level ) -> void 
@@ -22,11 +36,11 @@ auto LevelDraw::refreshCanvas ( const Level& level ) -> void
     const int wHeight = m_win->height();
     const int widthCellSize = (wWidth - PADDING) / level.width;
     const int heightCellSize = (wHeight - PADDING) / level.height;
-    m_cellSize = widthCellSize < heightCellSize ? widthCellSize : heightCellSize;
-    m_canvasWidth = m_cellSize * level.width;
-    m_canvasHeight = m_cellSize * level.height;
-    m_canvasX = (wWidth / 2) - (m_canvasWidth / 2);
-    m_canvasY = (wHeight / 2) - (m_canvasHeight / 2);
+    m_canvas.cellSize = widthCellSize < heightCellSize ? widthCellSize : heightCellSize;
+    m_canvas.width = m_canvas.cellSize * level.width;
+    m_canvas.height = m_canvas.cellSize * level.height;
+    m_canvas.x = (wWidth / 2) - (m_canvas.width / 2);
+    m_canvas.y = (wHeight / 2) - (m_canvas.height / 2);
     }
 
 auto LevelDraw::drawBackground() -> void
@@ -38,16 +52,16 @@ auto LevelDraw::drawBackground() -> void
 auto LevelDraw::drawCanvas() -> void
     {
     m_win->brush ( 0, 28, 87 );
-    m_win->drawFilledRect ( m_canvasX, m_canvasY, m_canvasWidth, m_canvasHeight);
+    m_win->drawFilledRect ( m_canvas.x, m_canvas.y, m_canvas.width, m_canvas.height);
     }
 
 auto LevelDraw::drawGrid(const Level& level) -> void
     {
     m_win->brush ( 0, 49, 110 );
     for (int column = 0; column <= level.width; ++column)
-        m_win->drawLine (m_canvasX+column*m_cellSize, m_canvasY, m_canvasX+column*m_cellSize, m_canvasY+m_canvasHeight);
+        m_win->drawLine (m_canvas.x+column*m_canvas.cellSize, m_canvas.y, m_canvas.x+column*m_canvas.cellSize, m_canvas.y+m_canvas.height);
     for (int row = 0; row <= level.height; ++row) 
-        m_win->drawLine (m_canvasX, m_canvasY+row*m_cellSize, m_canvasX+m_canvasWidth, m_canvasY+row*m_cellSize);
+        m_win->drawLine (m_canvas.x, m_canvas.y+row*m_canvas.cellSize, m_canvas.x+m_canvas.width, m_canvas.y+row*m_canvas.cellSize);
     }
 
 auto LevelDraw::drawBlocks (const Level& level) -> void 
@@ -67,7 +81,7 @@ auto LevelDraw::drawBlocks (const Level& level) -> void
             src.w = SPRITE_SIZE;
             src.y = id * SPRITE_SIZE;
             src.h = SPRITE_SIZE;
-            texture = m_words;
+            texture = getTexture ( TextureType::WORDS );
             }
         else 
             {
@@ -81,18 +95,20 @@ auto LevelDraw::drawBlocks (const Level& level) -> void
             src.w = SPRITE_SIZE;
             src.y = id * SPRITE_SIZE;
             src.h = SPRITE_SIZE;
-            texture = m_sprites;
+            texture = getTexture ( TextureType::SPRITES );
             }
-        trg.x = m_canvasX+block.x*m_cellSize;
-        trg.y = m_canvasY+block.y*m_cellSize;
-        trg.w = m_cellSize;
-        trg.h = m_cellSize;
+        trg.x = m_canvas.x+block.x*m_canvas.cellSize;
+        trg.y = m_canvas.y+block.y*m_canvas.cellSize;
+        trg.w = m_canvas.cellSize;
+        trg.h = m_canvas.cellSize;
         m_win->drawTexture(texture, &src, &trg, flipped);
         }
     }
 
 auto LevelDraw::drawParticleEffects (const Level& level) -> void
-    {
+    {   
+    SDL_Texture* texture = getTexture (TextureType::PARTICLES);
+
     for (const Block& block: level.blocks) 
         {
         // todo move this into a vector of Properties -> Particles, with particle data
@@ -101,8 +117,8 @@ auto LevelDraw::drawParticleEffects (const Level& level) -> void
             if ( m_random.rollOdds ( PARTICLE_SPAWN_CHANCE ) ) 
                 {
                 Particle p; 
-                p.x = (m_canvasX + m_cellSize*block.x) + m_random.getRandomInt ( 0, m_cellSize );
-                p.y = (m_canvasY + m_cellSize*block.y) + m_random.getRandomInt ( 0, m_cellSize );
+                p.x = (m_canvas.x + m_canvas.cellSize*block.x) + m_random.getRandomInt ( 0, m_canvas.cellSize );
+                p.y = (m_canvas.y + m_canvas.cellSize*block.y) + m_random.getRandomInt ( 0, m_canvas.cellSize );
                 p.type = ParticleType::STARS;
                 p.frames = 5;
                 p.ticksPerFrame = 10;
@@ -130,11 +146,11 @@ auto LevelDraw::drawParticleEffects (const Level& level) -> void
         src.y = (int)part->type * PARTICLE_SIZE;
         src.w = PARTICLE_SIZE;
         src.h = PARTICLE_SIZE;
-        trg.w = m_cellSize / 2;
-        trg.h = m_cellSize / 2;
-        trg.x = part->x - m_cellSize / 4;
-        trg.y = part->y - m_cellSize / 4;
-        m_win->drawTexture ( m_parts, &src, &trg, false );
+        trg.w = m_canvas.cellSize / 2;
+        trg.h = m_canvas.cellSize / 2;
+        trg.x = part->x - m_canvas.cellSize / 4;
+        trg.y = part->y - m_canvas.cellSize / 4;
+        m_win->drawTexture ( texture, &src, &trg, false );
         }
     }
 

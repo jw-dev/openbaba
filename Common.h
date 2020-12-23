@@ -11,6 +11,17 @@ typedef int_least8_t s8;
 typedef int_least16_t s16;
 typedef int_least32_t s32;
 
+// Config
+// Should be moved to a separate config file or something
+const unsigned SPRITE_SIZE = 24U;
+const unsigned PARTICLE_SIZE = 8U;
+const unsigned PADDING = 25U;
+const unsigned ANIMATION_TIMER = 10U;
+constexpr float PARTICLE_SPAWN_CHANCE = 0.05f;
+const char * const WORD_TEXTURE_PATH = "Data/words.png";
+const char * const SPRITE_TEXTURE_PATH = "Data/sprites.png";
+const char * const PARTICLE_TEXTURE_PATH = "Data/particles.png";
+
 enum State 
     {
     STARTTITLE      = 0,

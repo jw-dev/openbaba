@@ -13,7 +13,8 @@ enum class BlockID
     YOU,
     FLAG,
     WIN,
-    MOVE,
+    ROCK,
+    PUSH,
     };
 
 enum class BlockType 
@@ -25,7 +26,7 @@ enum class BlockType
 enum class Property: u64
     {
     YOU = 0x1,
-    MOVE = 0x2,
+    PUSH = 0x2,
     STOP = 0x4,
     WIN = 0x8,
     };

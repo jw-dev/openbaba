@@ -208,7 +208,7 @@ auto Level::tryMove ( Block& block, Direction dir ) -> bool
             Block* toMove = alsoToMove [i];
             if ( toMove->hasProp ( Property::STOP ))
                 return false; // Oops, we are stopped by that
-            else if ( toMove->hasProp ( Property::MOVE ))
+            else if ( toMove->hasProp ( Property::PUSH ))
                 {
                 bool moved = tryMove ( *toMove, dir );
                 if (!moved)
@@ -302,6 +302,9 @@ auto Level::applyRule (BlockID noun, Block* prop) -> void
                         break;
                     case BlockID::WIN:
                         block->addProp ( Property::WIN );
+                        break;
+                    case BlockID::PUSH:
+                        block->addProp ( Property::PUSH );
                         break;
                     default: 
                         printf ( "unknown property: block id: %d \n", prop );

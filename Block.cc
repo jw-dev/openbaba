@@ -4,11 +4,14 @@ static const std::vector <Block> allBlocks =
     {
     Block { BlockID::BABA, BlockType::ENTITY },
     Block { BlockID::FLAG, BlockType::ENTITY },
+    Block { BlockID::ROCK, BlockType::ENTITY },
     Block { BlockID::BABA, BlockType::WORD },
     Block { BlockID::IS, BlockType::WORD },
     Block { BlockID::YOU, BlockType::WORD },
     Block { BlockID::FLAG, BlockType::WORD },
     Block { BlockID::WIN, BlockType::WORD },
+    Block { BlockID::PUSH, BlockType::WORD },
+    Block { BlockID::ROCK, BlockType::WORD },
     };
 
 Block makeBlock (BlockID id, BlockType type, int x, int y)
@@ -33,7 +36,7 @@ Block::Block (BlockID p_id, BlockType p_type)
     type = p_type;
     if (type == BlockType::WORD)
         {
-        addProp (Property::MOVE); // All words are default moveable
+        addProp (Property::PUSH); // All words are default pushable
         }
     }
 
@@ -46,7 +49,8 @@ auto Block::isNoun () -> bool
     {
     if ( !isWord() ) return false;
     return id == BlockID::BABA
-        || id == BlockID::FLAG;
+        || id == BlockID::FLAG
+        || id == BlockID::ROCK;
     }
 
 auto Block::isJoiner () -> bool
@@ -60,7 +64,7 @@ auto Block::isProperty () -> bool
     if ( !isWord() ) return false;
     return id == BlockID::YOU
         || id == BlockID::WIN
-        || id == BlockID::MOVE
+        || id == BlockID::PUSH
         || id == BlockID::EMPTY;
     }
 

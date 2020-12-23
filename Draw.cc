@@ -13,6 +13,7 @@ LevelDraw::LevelDraw (Window* win)
     m_cellSize = 0;
     m_words = win->openTexture (WORD_TEXTURE_PATH);
     m_sprites = win->openTexture (SPRITE_TEXTURE_PATH);
+    m_parts = win->openTexture (PARTICLE_TEXTURE_PATH);
     }
 
 auto LevelDraw::refreshCanvas ( const Level& level ) -> void 
@@ -92,7 +93,49 @@ auto LevelDraw::drawBlocks (const Level& level) -> void
 
 auto LevelDraw::drawParticleEffects (const Level& level) -> void
     {
-    
+    for (const Block& block: level.blocks) 
+        {
+        // todo move this into a vector of Properties -> Particles, with particle data
+        if ( block.hasProp (Property::WIN )) 
+            {
+            if ( m_random.rollOdds ( PARTICLE_SPAWN_CHANCE ) ) 
+                {
+                Particle p; 
+                p.x = (m_canvasX + m_cellSize*block.x) + m_random.getRandomInt ( 0, m_cellSize );
+                p.y = (m_canvasY + m_cellSize*block.y) + m_random.getRandomInt ( 0, m_cellSize );
+                p.type = ParticleType::STARS;
+                p.frames = 5;
+                p.ticksPerFrame = 10;
+                m_particles.push_back ( p );
+                }
+            }
+        }
+    // Manage existing particles
+    for ( int i = 0; i < m_particles.size(); ++i ) 
+        {
+        Particle * part = &m_particles[i];
+        part->ticks++;
+        if (part->ticks % part->ticksPerFrame == 0) 
+            {
+            part->currentFrame++;
+            if (part->currentFrame > part->frames) 
+                {
+                m_particles.erase(m_particles.begin() + i);
+                continue;
+                }
+            }
+        // Draw 
+        SDL_Rect src, trg; 
+        src.x = part->currentFrame * PARTICLE_SIZE;
+        src.y = (int)part->type * PARTICLE_SIZE;
+        src.w = PARTICLE_SIZE;
+        src.h = PARTICLE_SIZE;
+        trg.w = m_cellSize / 2;
+        trg.h = m_cellSize / 2;
+        trg.x = part->x - m_cellSize / 4;
+        trg.y = part->y - m_cellSize / 4;
+        m_win->drawTexture ( m_parts, &src, &trg, false );
+        }
     }
 
 auto LevelDraw::draw(const Level& level) -> void 

@@ -25,7 +25,7 @@ class Window
 
         // Texture functions 
         SDL_Texture* openTexture (const std::string& p) const;
-        void drawTexture (SDL_Texture* t, SDL_Rect* src, SDL_Rect* trg, bool flipped) const;
+        void drawTexture (SDL_Texture* t, SDL_Rect* src, SDL_Rect* trg, bool flipped=false) const;
 
         // Getters 
         int height () const;

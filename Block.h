@@ -4,6 +4,7 @@
 #include "Common.h"
 #include <vector>
 #include <stdexcept>
+#include <map>
 
 enum class BlockID 
     {
@@ -29,6 +30,13 @@ enum class Property: u64
     PUSH = 0x2,
     STOP = 0x4,
     WIN = 0x8,
+    };
+
+static const std::map <BlockID, Property> mapBlockToProperty = 
+    {
+    std::make_pair ( BlockID::YOU, Property::YOU ),
+    std::make_pair ( BlockID::PUSH, Property::PUSH ),
+    std::make_pair ( BlockID::WIN, Property::WIN ),
     };
 
 class Block 

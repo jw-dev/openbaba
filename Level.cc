@@ -295,19 +295,9 @@ auto Level::applyRule (BlockID noun, Block* prop) -> void
                 {
                 // todo: replace this switch with a map between BlockID and Property 
                 // some properties might have special logic but we should handle them separately, not by default
-                switch (prop->id)
+                if ( mapBlockToProperty.find(prop->id) != mapBlockToProperty.end() )
                     {
-                    case BlockID::YOU:
-                        block->addProp ( Property::YOU );
-                        break;
-                    case BlockID::WIN:
-                        block->addProp ( Property::WIN );
-                        break;
-                    case BlockID::PUSH:
-                        block->addProp ( Property::PUSH );
-                        break;
-                    default: 
-                        printf ( "unknown property: block id: %d \n", prop );
+                    block->addProp ( mapBlockToProperty.at (prop->id) );
                     }
                 }
             }

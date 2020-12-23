@@ -38,8 +38,6 @@ private:
 
     auto getBlocks (u8 x, u8 y) -> std::vector< Block* >;
     auto getBlocks (BlockID byId, BlockType byType) -> std::vector< Block* >;
-
-    auto getAdjacentBlocks (u8 x, u8 y, Direction d) -> std::vector<Block>;
     };
 
 #endif 

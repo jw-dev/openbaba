@@ -36,7 +36,6 @@ private:
     // Drawing
     std::vector <Particle> m_particles;
     std::map <TextureType, SDL_Texture*> m_textures;
-    SDL_Texture *m_words, *m_sprites, *m_parts;
     Window * m_win;
     Canvas m_canvas;
 

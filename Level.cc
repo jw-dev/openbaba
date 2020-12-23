@@ -203,7 +203,7 @@ auto Level::tryMove ( Block& block, Direction dir ) -> bool
     std::vector< Block* > alsoToMove = getBlocks ( newX, newY );
     if ( !alsoToMove.empty() )
         {
-        for ( int i = 0 ; i < alsoToMove.size(); ++i )
+        for ( size_t i = 0 ; i < alsoToMove.size(); ++i )
             {
             Block* toMove = alsoToMove [i];
             if ( toMove->hasProp ( Property::STOP ))
@@ -221,12 +221,6 @@ auto Level::tryMove ( Block& block, Direction dir ) -> bool
     block.x = newX;
     block.y = newY;
     return true;
-    }
-
-auto Level::getAdjacentBlocks (u8 x, u8 y, Direction d) -> std::vector<Block>
-    {
-    std::vector<Block> v;
-    return v;
     }
 
 auto Level::parseRules ( BlockID id ) -> void 
@@ -281,7 +275,7 @@ auto Level::applyRule (BlockID noun, Block* prop) -> void
     std::vector< Block* > toApply = getBlocks ( noun, BlockType::ENTITY );
     if (toApply.empty())
         return;
-    for (int i = 0; i < toApply.size(); ++i)
+    for (size_t i = 0; i < toApply.size(); ++i)
         {
         Block* block = toApply[i];
         if (block)

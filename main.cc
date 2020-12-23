@@ -11,7 +11,7 @@ static const char *PROGRAM_NAME = "openbaba";
 static const int WINDOW_DEFAULT_WIDTH = 800;
 static const int WINDOW_DEFAULT_HEIGHT = 600;
 
-int main ( int argc, char ** argv ) 
+int main ( ) 
     {
     Window window ( PROGRAM_NAME, WINDOW_DEFAULT_WIDTH, WINDOW_DEFAULT_HEIGHT );
     Input input;

@@ -1,9 +1,9 @@
 #include "Window.h"
 
 Window::Window(const std::string& name, int width, int height)
-  : m_name (name),
-    m_width (width),
-    m_height (height)
+  : m_width (width),
+    m_height (height),
+    m_name (name)
     {
     SDL_Init(SDL_INIT_VIDEO);
 

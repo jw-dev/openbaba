@@ -14,13 +14,13 @@ class Window
         ~Window();
 
         // Draw functions 
-        void brush (u8 r, u8 g, u8 b);
-        void drawLine (int x1, int y1, int x2, int y2);
-        void drawFilledRect (int x, int y, int h, int w);
+        void brush (u8 r, u8 g, u8 b) const;
+        void drawLine (int x1, int y1, int x2, int y2) const;
+        void drawFilledRect (int x, int y, int h, int w) const;
 
         // Window functions 
         void clear() const;
-        void draw();
+        void draw() const;
         bool is_quit() const;
 
         // Texture functions 

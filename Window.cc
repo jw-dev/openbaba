@@ -43,7 +43,7 @@ int Window::width () const
     return m_width;
     }
 
-void Window::brush (u8 r, u8 g, u8 b)
+void Window::brush (u8 r, u8 g, u8 b) const
     {
     SDL_SetRenderDrawColor(
         m_renderer,
@@ -53,7 +53,7 @@ void Window::brush (u8 r, u8 g, u8 b)
         SDL_ALPHA_OPAQUE);
     }
 
-void Window::drawLine (int x1, int y1, int x2, int y2)
+void Window::drawLine (int x1, int y1, int x2, int y2) const
     {
     SDL_RenderDrawLine(
         m_renderer,
@@ -63,7 +63,7 @@ void Window::drawLine (int x1, int y1, int x2, int y2)
         y2);
     }
 
-void Window::drawFilledRect (int x, int y, int w, int h)
+void Window::drawFilledRect (int x, int y, int w, int h) const
     {
     SDL_Rect rect; 
     rect.x = x;
@@ -73,7 +73,7 @@ void Window::drawFilledRect (int x, int y, int w, int h)
     SDL_RenderFillRect(m_renderer, &rect);
     }
 
-void Window::draw()
+void Window::draw() const
     {
     SDL_RenderPresent(m_renderer);
     }

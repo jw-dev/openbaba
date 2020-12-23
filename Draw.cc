@@ -1,13 +1,13 @@
 #include "Draw.h"
 
-LevelDraw::LevelDraw (Window* win) 
+LevelDraw::LevelDraw (const Window& win) 
   : m_win (win)
     {
     m_animationFrame = 0U;
     m_levelId = -1;
-    m_textures [TextureType::PARTICLES] = win->openTexture (PARTICLE_TEXTURE_PATH);
-    m_textures [TextureType::SPRITES] = win->openTexture (SPRITE_TEXTURE_PATH);
-    m_textures [TextureType::WORDS] = win->openTexture (WORD_TEXTURE_PATH);
+    m_textures [TextureType::PARTICLES] = win.openTexture (PARTICLE_TEXTURE_PATH);
+    m_textures [TextureType::SPRITES] = win.openTexture (SPRITE_TEXTURE_PATH);
+    m_textures [TextureType::WORDS] = win.openTexture (WORD_TEXTURE_PATH);
     }
 
 LevelDraw::~LevelDraw ()
@@ -32,8 +32,8 @@ auto LevelDraw::getTexture (TextureType type) -> SDL_Texture*
 
 auto LevelDraw::refreshCanvas ( const Level& level ) -> void 
     {
-    const int wWidth = m_win->width();
-    const int wHeight = m_win->height();
+    const int wWidth = m_win.width();
+    const int wHeight = m_win.height();
     const int widthCellSize = (wWidth - PADDING) / level.width;
     const int heightCellSize = (wHeight - PADDING) / level.height;
     m_canvas.cellSize = widthCellSize < heightCellSize ? widthCellSize : heightCellSize;
@@ -45,23 +45,23 @@ auto LevelDraw::refreshCanvas ( const Level& level ) -> void
 
 auto LevelDraw::drawBackground() -> void
     {
-    m_win->brush ( 0, 21, 64 );
-    m_win->clear ();
+    m_win.brush ( 0, 21, 64 );
+    m_win.clear ();
     }
 
 auto LevelDraw::drawCanvas() -> void
     {
-    m_win->brush ( 0, 28, 87 );
-    m_win->drawFilledRect ( m_canvas.x, m_canvas.y, m_canvas.width, m_canvas.height);
+    m_win.brush ( 0, 28, 87 );
+    m_win.drawFilledRect ( m_canvas.x, m_canvas.y, m_canvas.width, m_canvas.height);
     }
 
 auto LevelDraw::drawGrid(const Level& level) -> void
     {
-    m_win->brush ( 0, 49, 110 );
+    m_win.brush ( 0, 49, 110 );
     for (int column = 0; column <= level.width; ++column)
-        m_win->drawLine (m_canvas.x+column*m_canvas.cellSize, m_canvas.y, m_canvas.x+column*m_canvas.cellSize, m_canvas.y+m_canvas.height);
+        m_win.drawLine (m_canvas.x+column*m_canvas.cellSize, m_canvas.y, m_canvas.x+column*m_canvas.cellSize, m_canvas.y+m_canvas.height);
     for (int row = 0; row <= level.height; ++row) 
-        m_win->drawLine (m_canvas.x, m_canvas.y+row*m_canvas.cellSize, m_canvas.x+m_canvas.width, m_canvas.y+row*m_canvas.cellSize);
+        m_win.drawLine (m_canvas.x, m_canvas.y+row*m_canvas.cellSize, m_canvas.x+m_canvas.width, m_canvas.y+row*m_canvas.cellSize);
     }
 
 auto LevelDraw::drawBlocks (const Level& level) -> void 
@@ -101,7 +101,7 @@ auto LevelDraw::drawBlocks (const Level& level) -> void
         trg.y = m_canvas.y+block.y*m_canvas.cellSize;
         trg.w = m_canvas.cellSize;
         trg.h = m_canvas.cellSize;
-        m_win->drawTexture(texture, &src, &trg, flipped);
+        m_win.drawTexture(texture, &src, &trg, flipped);
         }
     }
 
@@ -150,7 +150,7 @@ auto LevelDraw::drawParticleEffects (const Level& level) -> void
         trg.h = m_canvas.cellSize / 2;
         trg.x = part->x - m_canvas.cellSize / 4;
         trg.y = part->y - m_canvas.cellSize / 4;
-        m_win->drawTexture ( texture, &src, &trg, false );
+        m_win.drawTexture ( texture, &src, &trg, false );
         }
     }
 
@@ -161,13 +161,13 @@ auto LevelDraw::draw(const Level& level) -> void
         refreshCanvas(level);
         }
 
-    m_win->clear();
+    m_win.clear();
     drawBackground ();
     drawCanvas ();
     drawGrid (level);
     drawBlocks (level);
     drawParticleEffects (level);
-    m_win->draw();
+    m_win.draw();
 
     if (level.frames % ANIMATION_TIMER == 0)
         {

@@ -78,7 +78,7 @@ auto Level::save (const std::string& path) -> void
     out.close();
     }
 
-auto Level::update(Input* input) -> bool
+auto Level::update(const Input& input) -> bool
     {
     bool isDone = false;
     
@@ -98,9 +98,9 @@ auto Level::update(Input* input) -> bool
     return isDone;
     }
 
-auto Level::doInput (Input* input) -> bool 
+auto Level::doInput (const Input& input) -> bool 
     {
-    Direction move = input->moveDirection();
+    Direction move = input.moveDirection();
     bool isMove = move != Direction::NONE; 
     if ( isMove )
         {
@@ -133,7 +133,7 @@ auto Level::checkWin () -> bool
             std::vector<Block*> sameSpace = getBlocks ( you.x, you.y );
             if ( !sameSpace.empty() )
                 {
-                for ( auto* win: sameSpace )
+                for ( Block* win: sameSpace )
                     {
                     if ( !win->isWord() && win->hasProp( Property::WIN ) )
                         return true;
@@ -260,7 +260,7 @@ auto Level::parseRules ( BlockID id ) -> void
 
                 if (isProp || isNoun)
                     {
-                    applyRule ( block.id, prop );
+                    applyRule ( block.id, *prop );
                     // If we've changed one noun into another, we need to reapply the rules for this noun 
                     if (isNoun) 
                         parseRules ( prop->id );
@@ -270,7 +270,7 @@ auto Level::parseRules ( BlockID id ) -> void
         }
     }
 
-auto Level::applyRule (BlockID noun, Block* prop) -> void
+auto Level::applyRule (BlockID noun, Block& prop) -> void
     {
     std::vector< Block* > toApply = getBlocks ( noun, BlockType::ENTITY );
     if (toApply.empty())
@@ -278,21 +278,18 @@ auto Level::applyRule (BlockID noun, Block* prop) -> void
     for (size_t i = 0; i < toApply.size(); ++i)
         {
         Block* block = toApply[i];
-        if (block)
+        if ( prop.isNoun() )
             {
-            if ( prop->isNoun() )
+            block->id = prop.id; 
+            block->removeAllProps();
+            }
+        else if ( prop.isProperty() )
+            {
+            // todo: replace this switch with a map between BlockID and Property 
+            // some properties might have special logic but we should handle them separately, not by default
+            if ( mapBlockToProperty.find(prop.id) != mapBlockToProperty.end() )
                 {
-                block->id = prop->id; 
-                block->removeAllProps();
-                }
-            else if ( prop->isProperty() )
-                {
-                // todo: replace this switch with a map between BlockID and Property 
-                // some properties might have special logic but we should handle them separately, not by default
-                if ( mapBlockToProperty.find(prop->id) != mapBlockToProperty.end() )
-                    {
-                    block->addProp ( mapBlockToProperty.at (prop->id) );
-                    }
+                block->addProp ( mapBlockToProperty.at (prop.id) );
                 }
             }
         }

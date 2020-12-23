@@ -21,16 +21,16 @@ public:
     Level (int id);
     auto load (const std::string& path) -> void;
     auto save (const std::string& path) -> void;
-    auto update (Input* input) -> bool;
+    auto update (const Input& input) -> bool;
 private:
     bool m_hasMovedBlock = false;
     bool m_hasMoved = false;
 
-    auto doInput (Input* input) -> bool;
+    auto doInput (const Input& input) -> bool;
 
     auto checkWin () -> bool;
     auto parseRules (BlockID id = BlockID::EMPTY) -> void;
-    auto applyRule (BlockID noun, Block* target) -> void;
+    auto applyRule (BlockID noun, Block& target) -> void;
 
     // Try and move a block.
     // This attempts to move a block in a direction and any blocks that are in the way.

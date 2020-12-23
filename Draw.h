@@ -23,7 +23,7 @@ struct Canvas
 class LevelDraw 
     {
 public:
-    explicit LevelDraw (Window* win);
+    explicit LevelDraw (const Window& win);
     ~LevelDraw ();
     auto draw (const Level& level) -> void;
 private: 
@@ -36,7 +36,7 @@ private:
     // Drawing
     std::vector <Particle> m_particles;
     std::map <TextureType, SDL_Texture*> m_textures;
-    Window * m_win;
+    const Window& m_win;
     Canvas m_canvas;
 
     // Functions 

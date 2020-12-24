@@ -16,16 +16,14 @@ int main ( )
     Window window ( PROGRAM_NAME, WINDOW_DEFAULT_WIDTH, WINDOW_DEFAULT_HEIGHT );
     Input input;
     Level level (1);
-    LevelDraw levelDraw(window);
+    LevelDraw levelDraw (input, window);
 
     bool quit = false;
     while (!quit)
         {
         input.update ();
-        bool win = level.update (input);
         levelDraw.draw (level);
-
-        if ( win || input.quit() ) 
+        if ( input.quit() ) 
             quit = true;
         }
     }

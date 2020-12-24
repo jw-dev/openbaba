@@ -6,6 +6,7 @@
 #include "Level.h"
 #include "Particle.h"
 #include "Random.h"
+#include "Input.h"
 
 enum class TextureType
     {
@@ -23,9 +24,9 @@ struct Canvas
 class LevelDraw 
     {
 public:
-    explicit LevelDraw (const Window& win);
+    explicit LevelDraw (const Input& input, const Window& win);
     ~LevelDraw ();
-    auto draw (const Level& level) -> void;
+    auto draw (Level& level) -> void;
 private: 
     Random m_random;
 
@@ -37,10 +38,12 @@ private:
     std::vector <Particle> m_particles;
     std::map <TextureType, SDL_Texture*> m_textures;
     const Window& m_win;
+    const Input& m_input;
     Canvas m_canvas;
 
     // Functions 
     auto refreshCanvas (const Level& level) -> void;
+    auto doInput (Level& level) -> void;
     auto drawBackground () -> void;
     auto drawCanvas () -> void;
     auto drawGrid (const Level& level) -> void;

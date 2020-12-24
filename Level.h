@@ -7,7 +7,11 @@
 
 #include "Common.h"
 #include "Block.h"
-#include "Input.h"
+
+enum LEVEL_FLAG 
+    {
+    LEVEL_PARSE_WORDS = 0x1,
+    };
 
 class Level 
     {
@@ -17,25 +21,21 @@ public:
     std::string name;
     u8 width, height;
     std::vector<Block> blocks;
+    u32 flags = LEVEL_PARSE_WORDS;
     
     Level (int id);
     auto load (const std::string& path) -> void;
     auto save (const std::string& path) -> void;
-    auto update (const Input& input) -> bool;
+    auto tick () -> bool;
+    auto tryMove (Block& b, Direction d) -> bool;
+
 private:
-    bool m_hasMovedBlock = false;
-    bool m_hasMoved = false;
-
-    auto doInput (const Input& input) -> bool;
-
     auto checkWin () -> bool;
     auto parseRules (BlockID id = BlockID::EMPTY) -> void;
     auto applyRule (BlockID noun, Block& target) -> void;
 
     // Try and move a block.
     // This attempts to move a block in a direction and any blocks that are in the way.
-    auto tryMove (Block& b, Direction d) -> bool;
-
     auto getBlocks (u8 x, u8 y) -> std::vector< Block* >;
     auto getBlocks (BlockID byId, BlockType byType) -> std::vector< Block* >;
     };

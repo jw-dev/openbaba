@@ -1,7 +1,8 @@
 #include "Draw.h"
 
-LevelDraw::LevelDraw (const Window& win) 
-  : m_win (win)
+LevelDraw::LevelDraw (const Input& input, const Window& win) 
+  : m_win (win),
+    m_input (input)
     {
     m_animationFrame = 0U;
     m_levelId = -1;
@@ -17,6 +18,25 @@ LevelDraw::~LevelDraw ()
         if ( kv.second )
             {
             SDL_DestroyTexture ( kv.second );
+            }
+        }
+    }
+
+auto LevelDraw::doInput (Level& level) -> void
+    {
+    Direction move = m_input.moveDirection ();
+    bool isMove = move != Direction::NONE;
+    if ( isMove )
+        {
+        // for ( auto& block: );
+        for (auto& block: level.blocks)
+            {
+            if ( block.hasProp (Property::YOU ))
+                {
+                bool moved = level.tryMove ( block, move );
+                if ( moved )
+                    block.direction = move;
+                }
             }
         }
     }
@@ -154,13 +174,18 @@ auto LevelDraw::drawParticleEffects (const Level& level) -> void
         }
     }
 
-auto LevelDraw::draw(const Level& level) -> void 
+auto LevelDraw::draw(Level& level) -> void 
     {
     if (m_levelId == -1 || level.id != m_levelId)
         {
         refreshCanvas(level);
         }
 
+    
+    doInput (level);
+    level.tick ();
+    level.flags = 0U;
+    
     m_win.clear();
     drawBackground ();
     drawCanvas ();
@@ -169,7 +194,8 @@ auto LevelDraw::draw(const Level& level) -> void
     drawParticleEffects (level);
     m_win.draw();
 
-    if (level.frames % ANIMATION_TIMER == 0)
+    
+    if (level.frames++ % ANIMATION_TIMER == 0)
         {
         m_animationFrame++;
         m_animationFrame%=3;

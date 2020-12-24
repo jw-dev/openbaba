@@ -44,6 +44,8 @@ auto Level::load (const std::string& path) -> void
         {
         throw std::runtime_error ( "unable to open/read from file" );
         }
+    // When loading a new level, we need to parse the rules 
+    flags |= LEVEL_PARSE_WORDS;
     }
 
 auto Level::save (const std::string& path) -> void
@@ -78,47 +80,13 @@ auto Level::save (const std::string& path) -> void
     out.close();
     }
 
-auto Level::update(const Input& input) -> bool
+auto Level::tick() -> bool
     {
-    bool isDone = false;
-    
-    (void) doInput(input);
-    if ( m_hasMovedBlock )
+    if ( flags & LEVEL_PARSE_WORDS )
         {
         parseRules ();
         }
-    
-    if ( m_hasMoved ) 
-        {
-        isDone = checkWin ();
-        }
-    m_hasMoved = false;
-    m_hasMovedBlock = false;
-    frames++;
-    return isDone;
-    }
-
-auto Level::doInput (const Input& input) -> bool 
-    {
-    Direction move = input.moveDirection();
-    bool isMove = move != Direction::NONE; 
-    if ( isMove )
-        {
-        for ( auto& block: blocks )
-            {
-            // Only "YOU" can move
-            if ( block.hasProp (Property::YOU )) 
-                {
-                bool moved = tryMove ( block, move );
-                if (moved)
-                    {
-                    m_hasMoved = true;
-                    block.direction = move;
-                    }
-                }
-            }
-        }
-    return isMove;
+    return checkWin ();
     }
 
 auto Level::checkWin () -> bool 
@@ -217,7 +185,7 @@ auto Level::tryMove ( Block& block, Direction dir ) -> bool
             }
         }
     if ( block.type == BlockType::WORD )
-        m_hasMovedBlock = true;
+        flags |= LEVEL_PARSE_WORDS;
     block.x = newX;
     block.y = newY;
     return true;

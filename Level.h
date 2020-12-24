@@ -33,11 +33,7 @@ private:
     auto checkWin () -> bool;
     auto parseRules (BlockID id = BlockID::EMPTY) -> void;
     auto applyRule (BlockID noun, Block& target) -> void;
-
-    // Try and move a block.
-    // This attempts to move a block in a direction and any blocks that are in the way.
-    auto getBlocks (u8 x, u8 y) -> std::vector< Block* >;
-    auto getBlocks (BlockID byId, BlockType byType) -> std::vector< Block* >;
+    auto hasBlockId ( u8 x, u8 y, BlockID id ) -> bool;
     };
 
 #endif 

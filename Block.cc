@@ -40,12 +40,12 @@ Block::Block (BlockID p_id, BlockType p_type)
         }
     }
 
-auto Block::isWord () -> bool
+auto Block::isWord () const -> bool
     {
     return type == BlockType::WORD;
     }
 
-auto Block::isNoun () -> bool
+auto Block::isNoun () const -> bool
     {
     if ( !isWord() ) return false;
     return id == BlockID::BABA
@@ -53,13 +53,13 @@ auto Block::isNoun () -> bool
         || id == BlockID::ROCK;
     }
 
-auto Block::isJoiner () -> bool
+auto Block::isJoiner () const -> bool
     {
     if ( !isWord() ) return false;
     return id == BlockID::IS;
     }
 
-auto Block::isProperty () -> bool
+auto Block::isProperty () const -> bool
     {
     if ( !isWord() ) return false;
     return id == BlockID::YOU

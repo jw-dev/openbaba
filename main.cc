@@ -22,8 +22,8 @@ int main ( )
     while (!quit)
         {
         input.update ();
-        levelDraw.draw (level);
-        if ( input.quit() ) 
+        bool win = levelDraw.draw (level);
+        if ( win || input.quit() ) 
             quit = true;
         }
     }

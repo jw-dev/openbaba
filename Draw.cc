@@ -174,7 +174,7 @@ auto LevelDraw::drawParticleEffects (const Level& level) -> void
         }
     }
 
-auto LevelDraw::draw(Level& level) -> void 
+auto LevelDraw::draw(Level& level) -> bool 
     {
     if (m_levelId == -1 || level.id != m_levelId)
         {
@@ -183,7 +183,7 @@ auto LevelDraw::draw(Level& level) -> void
 
     
     doInput (level);
-    level.tick ();
+    bool win = level.tick ();
     level.flags = 0U;
     
     m_win.clear();
@@ -201,4 +201,5 @@ auto LevelDraw::draw(Level& level) -> void
         m_animationFrame%=3;
         }
     SDL_Delay (16.66);
+    return win;
     }

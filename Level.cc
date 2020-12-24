@@ -98,44 +98,19 @@ auto Level::checkWin () -> bool
         if (!you.isWord() && you.hasProp(Property::YOU))
             {
             // Check blocks on same space 
-            std::vector<Block*> sameSpace = getBlocks ( you.x, you.y );
-            if ( !sameSpace.empty() )
+            for (const auto& win: blocks) 
                 {
-                for ( Block* win: sameSpace )
+                if ( win.x == you.x
+                  && win.y == you.y
+                  && win.hasProp ( Property::WIN )
+                  && !win.isWord ())
                     {
-                    if ( !win->isWord() && win->hasProp( Property::WIN ) )
-                        return true;
+                    return true;
                     }
                 }
             }
         }
     return false;
-    }
-
-auto Level::getBlocks ( u8 x, u8 y ) -> std::vector< Block* >
-    {
-    std::vector< Block* > res; 
-    for (auto& block: blocks) 
-        {
-        if (block.x == x && block.y == y)
-            {
-            res.push_back( &block );
-            }
-        }
-    return res;
-    }
-
-auto Level::getBlocks (BlockID byId, BlockType byType) -> std::vector< Block* >
-    {
-    std::vector< Block* > res; 
-    for (auto& block: blocks) 
-        {
-        if (block.id == byId && block.type == byType)
-            {
-            res.push_back( &block );
-            }
-        }
-    return res;
     }
 
 auto Level::tryMove ( Block& block, Direction dir ) -> bool
@@ -168,17 +143,16 @@ auto Level::tryMove ( Block& block, Direction dir ) -> bool
         return false;
 
     // check all blocks in the way, recursively - if any of them can't move then neither can we 
-    std::vector< Block* > alsoToMove = getBlocks ( newX, newY );
-    if ( !alsoToMove.empty() )
+    // std::vector< Block* > alsoToMove = getBlocks ( newX, newY );
+    for (auto& toMove: blocks) 
         {
-        for ( size_t i = 0 ; i < alsoToMove.size(); ++i )
+        if ( toMove.x == newX && toMove.y == newY) 
             {
-            Block* toMove = alsoToMove [i];
-            if ( toMove->hasProp ( Property::STOP ))
+            if ( toMove.hasProp ( Property::STOP ))
                 return false; // Oops, we are stopped by that
-            else if ( toMove->hasProp ( Property::PUSH ))
+            else if ( toMove.hasProp ( Property::PUSH ))
                 {
-                bool moved = tryMove ( *toMove, dir );
+                bool moved = tryMove ( toMove, dir );
                 if (!moved)
                     return false;
                 }
@@ -191,6 +165,16 @@ auto Level::tryMove ( Block& block, Direction dir ) -> bool
     return true;
     }
 
+auto Level::hasBlockId ( u8 x, u8 y, BlockID id ) -> bool
+    {
+    for (const auto& block: blocks) 
+        {
+        if ( block.x == x && block.y == y && block.id == id)
+            return true;
+        }
+    return false;
+    }
+
 auto Level::parseRules ( BlockID id ) -> void 
     {
     // First remove all props 
@@ -201,63 +185,57 @@ auto Level::parseRules ( BlockID id ) -> void
             block.removeAllProps();
         }
 
-    for (Block& block: blocks) 
+    for ( Block& noun: blocks )
         {
-        if ( !block.isNoun() || (id != BlockID::EMPTY && block.id != id) )
+        if ( !noun.isNoun() || (id != BlockID::EMPTY && noun.id != id) )
             continue; 
 
-        // found a noun 
-        // this is horrendously bad and will be rewritten, just for the POC 
-        // this only supports simple sentences , and only L->R
-        bool ok = false;
-        std::vector < Block* > joiners = getBlocks ( block.x + 1, block.y );
-        for ( Block* join: joiners )
-            if ( join->isJoiner() )
+        for (int x: { 0, 1 }) 
+            for (int y: { 0, 1 })
                 {
-                ok = true;
-                break;
-                }
+                if (x == y)
+                    continue;
+                if ( !hasBlockId ( noun.x + x, noun.y + y, BlockID::IS ) )
+                    continue;
 
-        if (ok) 
-            {
-            std::vector < Block* > properties = getBlocks ( block.x + 2, block.y );
-            for ( Block* prop: properties )
-                {
-                const bool isProp = prop->isProperty ();
-                const bool isNoun = prop->isNoun ();
-
-                if (isProp || isNoun)
+                // Noun is joining to something, let's get the next word and see what we can apply 
+                const u8 propX = noun.x + x*2; 
+                const u8 propY = noun.y + y*2; 
+                for (auto& prop: blocks) 
                     {
-                    applyRule ( block.id, *prop );
-                    // If we've changed one noun into another, we need to reapply the rules for this noun 
-                    if (isNoun) 
-                        parseRules ( prop->id );
+                    if ( !(prop.x == propX && prop.y == propY) )
+                        continue;
+
+                    const bool isProperty = prop.isProperty ();
+                    const bool isNoun = prop.isNoun ();
+                    if ( isProperty || isNoun )
+                        {
+                        applyRule ( noun.id, prop );
+                        if (isNoun)
+                            parseRules ( prop.id );
+                        }
                     }
                 }
-            }
         }
     }
 
 auto Level::applyRule (BlockID noun, Block& prop) -> void
     {
-    std::vector< Block* > toApply = getBlocks ( noun, BlockType::ENTITY );
-    if (toApply.empty())
-        return;
-    for (size_t i = 0; i < toApply.size(); ++i)
+    for (auto& block: blocks) 
         {
-        Block* block = toApply[i];
-        if ( prop.isNoun() )
+        if ( block.id == noun && block.type == BlockType::ENTITY ) 
             {
-            block->id = prop.id; 
-            block->removeAllProps();
-            }
-        else if ( prop.isProperty() )
-            {
-            // todo: replace this switch with a map between BlockID and Property 
-            // some properties might have special logic but we should handle them separately, not by default
-            if ( mapBlockToProperty.find(prop.id) != mapBlockToProperty.end() )
+            if ( prop.isNoun() ) 
                 {
-                block->addProp ( mapBlockToProperty.at (prop.id) );
+                block.id = prop.id; 
+                block.removeAllProps ();
+                }
+            else if ( prop.isProperty() )
+                {
+                if ( mapBlockToProperty.find(prop.id) != mapBlockToProperty.end() )
+                    {
+                    block.addProp ( mapBlockToProperty.at (prop.id) );
+                    }
                 }
             }
         }

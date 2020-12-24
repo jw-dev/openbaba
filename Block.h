@@ -54,10 +54,10 @@ class Block
         auto removeAllProps () -> void;
 
         // Helper functions 
-        auto isWord () -> bool;
-        auto isNoun () -> bool;
-        auto isJoiner () -> bool;
-        auto isProperty () -> bool;
+        auto isWord () const -> bool;
+        auto isNoun () const -> bool;
+        auto isJoiner () const -> bool;
+        auto isProperty () const -> bool;
     private:
         u64 m_props;
     };

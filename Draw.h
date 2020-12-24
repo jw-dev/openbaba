@@ -26,7 +26,7 @@ class LevelDraw
 public:
     explicit LevelDraw (const Input& input, const Window& win);
     ~LevelDraw ();
-    auto draw (Level& level) -> void;
+    auto draw (Level& level) -> bool;
 private: 
     Random m_random;
 

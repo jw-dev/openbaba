@@ -22,6 +22,7 @@ LevelDraw::~LevelDraw ()
         }
     }
 
+
 auto LevelDraw::doInput (Level& level) -> void
     {
     Direction move = m_input.moveDirection ();
@@ -174,6 +175,14 @@ auto LevelDraw::drawParticleEffects (const Level& level) -> void
         }
     }
 
+auto LevelDraw::tick ( Level& level ) -> bool
+    {
+    bool win = level.tick(); 
+    level.frames += 1;
+    level.flags = 0U;
+    return win ;
+    }
+
 auto LevelDraw::draw(Level& level) -> bool 
     {
     if (m_levelId == -1 || level.id != m_levelId)
@@ -181,11 +190,10 @@ auto LevelDraw::draw(Level& level) -> bool
         refreshCanvas(level);
         }
 
-    
+       
     doInput (level);
-    bool win = level.tick ();
-    level.flags = 0U;
-    
+    bool win = tick (level); 
+
     m_win.clear();
     drawBackground ();
     drawCanvas ();
@@ -195,7 +203,7 @@ auto LevelDraw::draw(Level& level) -> bool
     m_win.draw();
 
     
-    if (level.frames++ % ANIMATION_TIMER == 0)
+    if (level.frames % ANIMATION_TIMER == 0)
         {
         m_animationFrame++;
         m_animationFrame%=3;

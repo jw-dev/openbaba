@@ -54,6 +54,21 @@ auto Input::update() -> void
                         m_key = Key::RIGHT;
                         m_moveDirection = Direction::RIGHT;
                         break;
+                    case SDLK_o:
+                        m_key = Key::EDITOR_HEIGHT_MINUS;
+                        break;
+                    case SDLK_p:
+                        m_key = Key::EDITOR_HEIGHT_PLUS;
+                        break;
+                    case SDLK_k:
+                        m_key = Key::EDITOR_WIDTH_MINUS;
+                        break;
+                    case SDLK_l:
+                        m_key = Key::EDITOR_WIDTH_PLUS;
+                        break;
+                    case SDLK_SPACE:
+                        m_key = Key::PAUSE;
+                        break;
                     }
                 break;
                 }

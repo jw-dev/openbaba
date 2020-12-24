@@ -27,7 +27,7 @@ public:
     explicit LevelDraw (const Input& input, const Window& win);
     ~LevelDraw ();
     auto draw (Level& level) -> bool;
-private: 
+protected: 
     Random m_random;
 
     // Level data
@@ -42,8 +42,10 @@ private:
     Canvas m_canvas;
 
     // Functions 
+    virtual auto doInput (Level& level) -> void;
+    virtual auto tick (Level& level) -> bool;
+
     auto refreshCanvas (const Level& level) -> void;
-    auto doInput (Level& level) -> void;
     auto drawBackground () -> void;
     auto drawCanvas () -> void;
     auto drawGrid (const Level& level) -> void;
@@ -51,4 +53,17 @@ private:
     auto drawParticleEffects (const Level& level) -> void;
     auto getTexture (TextureType type) -> SDL_Texture*;
     };
+
+class Editor : public LevelDraw
+    {
+public:
+    Editor ( const Input& input, const Window& win );
+    auto doInput ( Level& level ) -> void override;
+    auto tick ( Level& level ) -> bool override;
+private:
+    bool m_paused;
+    Block* m_selectedTile;
+    };
+
+
 #endif

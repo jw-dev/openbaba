@@ -13,6 +13,10 @@ enum class Key
     DOWN = 0x8,
     WAIT = 0x10,
     PAUSE = 0x20,
+    EDITOR_HEIGHT_PLUS = 0x40,
+    EDITOR_HEIGHT_MINUS = 0x80,
+    EDITOR_WIDTH_PLUS = 0x100,
+    EDITOR_WIDTH_MINUS = 0x200,
     };
 
 class Input 

@@ -11,18 +11,27 @@ static const char *PROGRAM_NAME = "openbaba";
 static const int WINDOW_DEFAULT_WIDTH = 800;
 static const int WINDOW_DEFAULT_HEIGHT = 600;
 
-int main ( ) 
-    {
+int main ( int argc, char** argv ) 
+    { 
     Window window ( PROGRAM_NAME, WINDOW_DEFAULT_WIDTH, WINDOW_DEFAULT_HEIGHT );
     Input input;
     Level level (1);
-    LevelDraw levelDraw (input, window);
+    LevelDraw * levelDraw; 
+
+    if ( argc > 1 )
+        {
+        levelDraw = new Editor ( input, window );
+        }
+    else 
+        {
+        levelDraw = new LevelDraw ( input, window );
+        }
 
     bool quit = false;
     while (!quit)
         {
         input.update ();
-        bool win = levelDraw.draw (level);
+        bool win = levelDraw->draw (level);
         if ( win || input.quit() ) 
             quit = true;
         }

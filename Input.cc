@@ -1,84 +1,64 @@
 #include "Input.h"
 
-auto Input::moveDirection () const -> Direction
+auto Input::pressed ( u32 press ) const -> bool 
     {
-    return m_moveDirection;
+    return press & m_pressed;
     }
 
-auto Input::quit() const -> bool 
+auto Input::x () const -> u32 
     {
-    return m_isQuit;
+    return m_x;
     }
 
-auto Input::pressed() const -> Key 
+auto Input::y () const -> u32 
     {
-    return m_key;
+    return m_y;
     }
 
-auto Input::moving() const -> bool 
+auto Input::update () -> void 
     {
-    return m_key == Key::LEFT
-        || m_key == Key::RIGHT
-        || m_key == Key::UP
-        || m_key == Key::DOWN;
-    }
+    u32 pressed = 0U;
+    SDL_Event e; 
 
-auto Input::update() -> void 
-    {
-    m_key = Key::NONE;
-    m_isQuit = false;
-    m_moveDirection = Direction::NONE;
+    auto pressKey = [&pressed] (u32 key) 
+        {
+        if ( sdlkToBabaMap.find (key) != sdlkToBabaMap.end() )
+            pressed |= sdlkToBabaMap.at ( key );
+        };
 
-    SDL_Event e;
-    while ( SDL_PollEvent (&e) ) 
+    while ( SDL_PollEvent (&e) )
         {
         switch (e.type) 
             {
             case SDL_KEYDOWN: 
-                {
-                switch (e.key.keysym.sym) 
+                pressKey ( e.key.keysym.sym );
+                break;
+            case SDL_MOUSEWHEEL:
+                if ( e.wheel.y > 0 ) 
+                    pressed |= PRESSED_SCROLLUP;
+                else if ( e.wheel.y < 0 )
+                    pressed |= PRESSED_SCROLLDOWN;
+                break;
+            case SDL_MOUSEBUTTONDOWN:
+                switch ( e.button.button ) 
                     {
-                    case SDLK_UP:
-                        m_key = Key::UP;
-                        m_moveDirection = Direction::UP;
+                    case SDL_BUTTON_LEFT: 
+                        pressed |= PRESSED_LEFTCLICK;
                         break;
-                    case SDLK_LEFT:
-                        m_key = Key::LEFT;
-                        m_moveDirection = Direction::LEFT;
-                        break;
-                    case SDLK_DOWN:
-                        m_key = Key::DOWN;
-                        m_moveDirection = Direction::DOWN;
-                        break;
-                    case SDLK_RIGHT:
-                        m_key = Key::RIGHT;
-                        m_moveDirection = Direction::RIGHT;
-                        break;
-                    case SDLK_o:
-                        m_key = Key::EDITOR_HEIGHT_MINUS;
-                        break;
-                    case SDLK_p:
-                        m_key = Key::EDITOR_HEIGHT_PLUS;
-                        break;
-                    case SDLK_k:
-                        m_key = Key::EDITOR_WIDTH_MINUS;
-                        break;
-                    case SDLK_l:
-                        m_key = Key::EDITOR_WIDTH_PLUS;
-                        break;
-                    case SDLK_SPACE:
-                        m_key = Key::PAUSE;
+                    default:
                         break;
                     }
                 break;
-                }
+            case SDL_MOUSEMOTION:
+                m_x = e.motion.x;
+                m_y = e.motion.y;
+                break;
             case SDL_QUIT:
-                {
-                m_isQuit = true;
-                break;
-                }
-            default:
-                break;
+                pressed |= PRESSED_QUIT;
             }
+        }
+    if ( pressed != m_pressed )
+        {
+        m_pressed = pressed;
         }
     }

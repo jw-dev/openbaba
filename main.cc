@@ -32,7 +32,7 @@ int main ( int argc, char** argv )
         {
         input.update ();
         bool win = levelDraw->draw (level);
-        if ( win || input.quit() ) 
+        if ( win || input.pressed ( PRESSED_QUIT )) 
             quit = true;
         }
     }

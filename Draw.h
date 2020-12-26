@@ -26,13 +26,14 @@ class LevelDraw
 public:
     explicit LevelDraw (const Input& input, const Window& win);
     ~LevelDraw ();
-    auto draw (Level& level) -> bool;
+    virtual auto draw (Level& level) -> bool;
 protected: 
     Random m_random;
 
     // Level data
     int m_levelId;
     unsigned m_animationFrame;
+    bool m_paused;
 
     // Drawing
     std::vector <Particle> m_particles;
@@ -43,26 +44,31 @@ protected:
 
     // Functions 
     virtual auto doInput (Level& level) -> void;
-    virtual auto tick (Level& level) -> bool;
+    virtual auto drawExtra (Level& level) -> void;
 
+    auto getDirectionInput () -> Direction;
     auto refreshCanvas (const Level& level) -> void;
     auto drawBackground () -> void;
     auto drawCanvas () -> void;
     auto drawGrid (const Level& level) -> void;
+    auto drawBlock ( const Block& block ) -> void;
     auto drawBlocks (const Level& level) -> void;
     auto drawParticleEffects (const Level& level) -> void;
     auto getTexture (TextureType type) -> SDL_Texture*;
     };
 
-class Editor : public LevelDraw
+class Editor: public LevelDraw 
     {
 public:
     Editor ( const Input& input, const Window& win );
     auto doInput ( Level& level ) -> void override;
-    auto tick ( Level& level ) -> bool override;
-private:
-    bool m_paused;
-    Block* m_selectedTile;
+    auto drawExtra ( Level& level ) -> void override;
+private: 
+    auto handleResize ( Level& level ) -> void;
+    auto handleChangeSprite ( Level& level ) -> void;
+    
+    auto isWithinCanvas ( int x, int y ) const -> bool;
+    size_t currentBlock = 0;
     };
 
 

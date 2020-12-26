@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <map>
 
+
 enum class BlockID 
     {
     EMPTY,
@@ -63,5 +64,7 @@ class Block
     };
 
 Block makeBlock (BlockID id, BlockType type, int x, int y);
+Block makeBlockFromId ( size_t id );
+size_t countBlocks ();
 
 #endif

@@ -76,6 +76,7 @@ void Window::drawFilledRect (int x, int y, int w, int h) const
 void Window::draw() const
     {
     SDL_RenderPresent(m_renderer);
+    SDL_Delay (16.66); // MOVE THIS TO CONFIG
     }
 
 SDL_Texture* Window::openTexture(const std::string& p) const

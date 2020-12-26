@@ -22,6 +22,18 @@ const char * const WORD_TEXTURE_PATH = "Data/words.png";
 const char * const SPRITE_TEXTURE_PATH = "Data/sprites.png";
 const char * const PARTICLE_TEXTURE_PATH = "Data/particles.png";
 
+// controls 
+#define KEY_QUIT            SDLK_ESCAPE
+#define KEY_PAUSE           SDLK_SPACE
+#define KEY_LEFT            SDLK_LEFT
+#define KEY_UP              SDLK_UP
+#define KEY_DOWN            SDLK_DOWN
+#define KEY_RIGHT           SDLK_RIGHT
+#define KEY_WIDTH_PLUS      SDLK_p
+#define KEY_WIDTH_MINUS     SDLK_o
+#define KEY_HEIGHT_PLUS     SDLK_l
+#define KEY_HEIGHT_MINUS    SDLK_k
+
 enum State 
     {
     STARTTITLE      = 0,

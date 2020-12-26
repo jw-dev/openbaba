@@ -14,6 +14,18 @@ static const std::vector <Block> allBlocks =
     Block { BlockID::ROCK, BlockType::WORD },
     };
 
+size_t countBlocks ()
+    {
+    return allBlocks.size(); 
+    }
+
+Block makeBlockFromId ( size_t id )
+    {
+    if ( id >= allBlocks.size() )
+        throw std::runtime_error ( "invalid block specified");
+    return allBlocks [ id ];
+    }
+
 Block makeBlock (BlockID id, BlockType type, int x, int y)
     {
     for ( const auto& b: allBlocks )

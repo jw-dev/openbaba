@@ -1,36 +1,56 @@
 #ifndef INPUT_H
 #define INPUT_H
 
+#include <vector>
+#include <map>
 #include <SDL2/SDL.h>
+
 #include "Common.h"
 
-enum class Key 
+enum Pressed: u32
     {
-    NONE,
-    LEFT = 0x1,
-    RIGHT = 0x2,
-    UP = 0x4,
-    DOWN = 0x8,
-    WAIT = 0x10,
-    PAUSE = 0x20,
-    EDITOR_HEIGHT_PLUS = 0x40,
-    EDITOR_HEIGHT_MINUS = 0x80,
-    EDITOR_WIDTH_PLUS = 0x100,
-    EDITOR_WIDTH_MINUS = 0x200,
+    PRESSED_LEFT            = 0x1,
+    PRESSED_RIGHT           = 0x2,
+    PRESSED_UP              = 0x4,
+    PRESSED_DOWN            = 0x8,
+    PRESSED_WAIT            = 0x10,
+    PRESSED_PAUSE           = 0x20,
+    PRESSED_QUIT            = 0x40,
+    PRESSED_LEFTCLICK       = 0x80,
+    PRESSED_RIGHTCLICK      = 0x100,
+    PRESSED_SCROLLUP        = 0x200,
+    PRESSED_SCROLLDOWN      = 0x400,
+    PRESSED_WIDTH_PLUS      = 0x800,
+    PRESSED_WIDTH_MINUS     = 0x1000,
+    PRESSED_HEIGHT_PLUS     = 0x2000,
+    PRESSED_HEIGHT_MINUS    = 0x4000,
+    };
+
+static const std::map <u32, u32> sdlkToBabaMap = 
+    {
+    std::make_pair ( KEY_LEFT, PRESSED_LEFT ),
+    std::make_pair ( KEY_RIGHT, PRESSED_RIGHT ),
+    std::make_pair ( KEY_UP, PRESSED_UP ),
+    std::make_pair ( KEY_DOWN, PRESSED_DOWN ),
+    std::make_pair ( KEY_PAUSE, PRESSED_PAUSE ),
+    std::make_pair ( KEY_WIDTH_PLUS, PRESSED_WIDTH_PLUS ),
+    std::make_pair ( KEY_WIDTH_MINUS, PRESSED_WIDTH_MINUS ),
+    std::make_pair ( KEY_HEIGHT_PLUS, PRESSED_HEIGHT_PLUS ),
+    std::make_pair ( KEY_HEIGHT_MINUS, PRESSED_HEIGHT_MINUS ),
+    std::make_pair ( KEY_QUIT, PRESSED_QUIT ),
     };
 
 class Input 
     {
 public: 
-    auto moveDirection () const -> Direction;
-    auto moving () const -> bool;
-    auto quit () const -> bool;
-    auto pressed () const -> Key;
+    auto pressed ( u32 press ) const -> bool;
+    auto x () const -> u32;
+    auto y () const -> u32;
     auto update () -> void;
 private:
-    bool m_isQuit = false;
-    Key m_key = Key::NONE;
-    Direction m_moveDirection = Direction::NONE;
+    u32 m_pressed=0U;
+    u32 m_x=0U;
+    u32 m_y=0U;
     };
 
 #endif 

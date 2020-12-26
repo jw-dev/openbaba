@@ -1,11 +1,12 @@
 #include "Draw.h"
 
 LevelDraw::LevelDraw (const Input& input, const Window& win) 
-  : m_win (win),
+  : m_levelId (-1),
+    m_animationFrame (0U),
+    m_paused (false),
+    m_win (win),
     m_input (input)
     {
-    m_animationFrame = 0U;
-    m_levelId = -1;
     m_textures [TextureType::PARTICLES] = win.openTexture (PARTICLE_TEXTURE_PATH);
     m_textures [TextureType::SPRITES] = win.openTexture (SPRITE_TEXTURE_PATH);
     m_textures [TextureType::WORDS] = win.openTexture (WORD_TEXTURE_PATH);
@@ -22,22 +23,27 @@ LevelDraw::~LevelDraw ()
         }
     }
 
+auto LevelDraw::getDirectionInput () -> Direction 
+    {
+    if ( m_input.pressed (PRESSED_LEFT) )           return Direction::LEFT;
+    else if ( m_input.pressed ( PRESSED_RIGHT ) )   return Direction::RIGHT;
+    else if ( m_input.pressed ( PRESSED_UP ) )      return Direction::UP;
+    else if ( m_input.pressed ( PRESSED_DOWN ) )    return Direction::DOWN;
+    else                                            return Direction::NONE;
+    }
 
 auto LevelDraw::doInput (Level& level) -> void
     {
-    Direction move = m_input.moveDirection ();
-    bool isMove = move != Direction::NONE;
-    if ( isMove )
+    Direction move = getDirectionInput ();
+    if ( move == Direction::NONE ) 
+        return;
+    for (auto& block: level.blocks)
         {
-        // for ( auto& block: );
-        for (auto& block: level.blocks)
+        if ( block.hasProp (Property::YOU ))
             {
-            if ( block.hasProp (Property::YOU ))
-                {
-                bool moved = level.tryMove ( block, move );
-                if ( moved )
-                    block.direction = move;
-                }
+            bool moved = level.tryMove ( block, move );
+            if ( moved )
+                block.direction = move;
             }
         }
     }
@@ -85,44 +91,49 @@ auto LevelDraw::drawGrid(const Level& level) -> void
         m_win.drawLine (m_canvas.x, m_canvas.y+row*m_canvas.cellSize, m_canvas.x+m_canvas.width, m_canvas.y+row*m_canvas.cellSize);
     }
 
+auto LevelDraw::drawBlock ( const Block& block ) -> void
+    {
+    const int id = (int)block.id;
+    const BlockType type = block.type;
+    const Direction direction = block.direction;
+    SDL_Texture * texture;
+    SDL_Rect src, trg;
+    bool flipped = false;
+
+    if (type == BlockType::WORD)
+        {
+        src.x = SPRITE_SIZE*m_animationFrame;
+        src.w = SPRITE_SIZE;
+        src.y = id * SPRITE_SIZE;
+        src.h = SPRITE_SIZE;
+        texture = getTexture ( TextureType::WORDS );
+        }
+    else 
+        {
+        unsigned int frameAdd = (unsigned) direction;
+        if (direction == Direction::LEFT)
+            {
+            frameAdd = 0;
+            flipped = true;
+            }
+        src.x = (frameAdd*SPRITE_SIZE)+(3*SPRITE_SIZE*m_animationFrame);
+        src.w = SPRITE_SIZE;
+        src.y = id * SPRITE_SIZE;
+        src.h = SPRITE_SIZE;
+        texture = getTexture ( TextureType::SPRITES );
+        }
+    trg.x = m_canvas.x+block.x*m_canvas.cellSize;
+    trg.y = m_canvas.y+block.y*m_canvas.cellSize;
+    trg.w = m_canvas.cellSize;
+    trg.h = m_canvas.cellSize;
+    m_win.drawTexture(texture, &src, &trg, flipped);
+    }
+
 auto LevelDraw::drawBlocks (const Level& level) -> void 
     {
     for (const Block& block: level.blocks)
         {
-        const int id = (int)block.id;
-        const BlockType type = block.type;
-        const Direction direction = block.direction;
-        SDL_Texture * texture;
-        SDL_Rect src, trg;
-        bool flipped = false;
-
-        if (type == BlockType::WORD)
-            {
-            src.x = SPRITE_SIZE*m_animationFrame;
-            src.w = SPRITE_SIZE;
-            src.y = id * SPRITE_SIZE;
-            src.h = SPRITE_SIZE;
-            texture = getTexture ( TextureType::WORDS );
-            }
-        else 
-            {
-            unsigned int frameAdd = (unsigned) direction;
-            if (direction == Direction::LEFT)
-                {
-                frameAdd = 0;
-                flipped = true;
-                }
-            src.x = (frameAdd*SPRITE_SIZE)+(3*SPRITE_SIZE*m_animationFrame);
-            src.w = SPRITE_SIZE;
-            src.y = id * SPRITE_SIZE;
-            src.h = SPRITE_SIZE;
-            texture = getTexture ( TextureType::SPRITES );
-            }
-        trg.x = m_canvas.x+block.x*m_canvas.cellSize;
-        trg.y = m_canvas.y+block.y*m_canvas.cellSize;
-        trg.w = m_canvas.cellSize;
-        trg.h = m_canvas.cellSize;
-        m_win.drawTexture(texture, &src, &trg, flipped);
+        drawBlock (block);
         }
     }
 
@@ -175,24 +186,32 @@ auto LevelDraw::drawParticleEffects (const Level& level) -> void
         }
     }
 
-auto LevelDraw::tick ( Level& level ) -> bool
+auto LevelDraw::drawExtra ( Level& level ) -> void
     {
-    bool win = level.tick(); 
-    level.frames += 1;
-    level.flags = 0U;
-    return win ;
+    // Nothing
     }
 
 auto LevelDraw::draw(Level& level) -> bool 
     {
+    bool win = false;
+
     if (m_levelId == -1 || level.id != m_levelId)
         {
         refreshCanvas(level);
         }
 
-       
     doInput (level);
-    bool win = tick (level); 
+    if ( !m_paused )
+        {
+        win = level.tick(); 
+        level.frames += 1;
+        level.flags = 0U;
+        if ( level.frames % ANIMATION_TIMER == 0 )
+            {
+            m_animationFrame++;
+            m_animationFrame%=3;
+            }
+        }
 
     m_win.clear();
     drawBackground ();
@@ -200,14 +219,7 @@ auto LevelDraw::draw(Level& level) -> bool
     drawGrid (level);
     drawBlocks (level);
     drawParticleEffects (level);
+    drawExtra ( level );
     m_win.draw();
-
-    
-    if (level.frames % ANIMATION_TIMER == 0)
-        {
-        m_animationFrame++;
-        m_animationFrame%=3;
-        }
-    SDL_Delay (16.66);
     return win;
     }

@@ -34,23 +34,6 @@ const char * const PARTICLE_TEXTURE_PATH = "Data/particles.png";
 #define KEY_HEIGHT_PLUS     SDLK_l
 #define KEY_HEIGHT_MINUS    SDLK_k
 
-enum State 
-    {
-    STARTTITLE      = 0,
-    STARTMAP        = 1<<8,
-    STARTGAME       = 2<<8,
-    STARTSAVEDGAME  = 3<<8,
-    STARTPICTURE    = 4<<8,
-    EXITGAME        = 5<<8,
-    };
-
-enum class Movement 
-    {
-    HORIZONTAL,
-    VERTICAL,
-    NONE,
-    };
-
 enum class Direction 
     {
     RIGHT,

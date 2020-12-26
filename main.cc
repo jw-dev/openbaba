@@ -16,7 +16,7 @@ int main ( int argc, char** argv )
     Window window ( PROGRAM_NAME, WINDOW_DEFAULT_WIDTH, WINDOW_DEFAULT_HEIGHT );
     Input input;
     Level level (1);
-    LevelDraw * levelDraw; 
+    LevelDraw * levelDraw;
 
     if ( argc > 1 )
         {

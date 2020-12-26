@@ -12,6 +12,7 @@ static const std::vector <Block> allBlocks =
     Block { BlockID::WIN, BlockType::WORD },
     Block { BlockID::PUSH, BlockType::WORD },
     Block { BlockID::ROCK, BlockType::WORD },
+    Block { BlockID::STOP, BlockType::WORD },
     };
 
 size_t countBlocks ()
@@ -77,7 +78,8 @@ auto Block::isProperty () const -> bool
     return id == BlockID::YOU
         || id == BlockID::WIN
         || id == BlockID::PUSH
-        || id == BlockID::EMPTY;
+        || id == BlockID::EMPTY
+        || id == BlockID::STOP;
     }
 
 auto Block::addProp (Property p) -> void 

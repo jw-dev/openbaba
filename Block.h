@@ -18,6 +18,7 @@ enum class BlockID
     ROCK,
     PUSH,
     STOP,
+    SINK,
     };
 
 enum class BlockType 
@@ -32,6 +33,7 @@ enum class Property: u64
     PUSH = 0x2,
     STOP = 0x4,
     WIN = 0x8,
+    SINK = 0x10,
     };
 
 static const std::map <BlockID, Property> mapBlockToProperty = 
@@ -40,6 +42,7 @@ static const std::map <BlockID, Property> mapBlockToProperty =
     std::make_pair ( BlockID::PUSH, Property::PUSH ),
     std::make_pair ( BlockID::WIN, Property::WIN ),
     std::make_pair ( BlockID::STOP, Property::STOP ),
+    std::make_pair ( BlockID::SINK, Property::SINK ),
     };
 
 class Block 

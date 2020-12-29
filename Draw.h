@@ -43,10 +43,10 @@ protected:
     Canvas m_canvas;
 
     // Functions 
-    virtual auto doInput (Level& level) -> void;
+    virtual auto doInput (Level& level) -> bool;
     virtual auto drawExtra (Level& level) -> void;
 
-    auto getDirectionInput () -> Direction;
+    auto getDirectionInput () const -> u8;
     auto refreshCanvas (const Level& level) -> void;
     auto drawBackground () -> void;
     auto drawCanvas () -> void;
@@ -61,11 +61,12 @@ class Editor: public LevelDraw
     {
 public:
     Editor ( const Input& input, const Window& win );
-    auto doInput ( Level& level ) -> void override;
+    auto doInput ( Level& level ) -> bool override;
     auto drawExtra ( Level& level ) -> void override;
 private: 
     auto handleResize ( Level& level ) -> void;
     auto handleChangeSprite ( Level& level ) -> void;
+    auto handleSave ( Level& level ) -> void;
     
     auto isWithinCanvas ( int x, int y ) const -> bool;
     size_t currentBlock = 0;

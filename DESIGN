@@ -1,0 +1,222 @@
+Design 
+
+
+/* Comments 
+    Every single rule in the game applies some kind of property or transformation on a noun, many nouns, everything, or nothing.
+    BABA IS WALL    => Turns baba into a wall object.
+        BlockID is; 
+        What if multiple sentences?
+            BABA IS WALL
+            BABA IS KEY
+                ...? 
+                Whichever was activated first wins.
+                If activated at same time -> arbitrary.
+    BABA HAS WALL   => 
+        vector<BlockID> has;
+    BABA MAKE WALL  =>
+        vector<BlockID> make;
+    BABA IS YOU AND FLAG AND PUSH   =>
+        vector<BlockID> is [FLAG]
+        vector<BlockID> isProp [YOU, PUSH]
+    BABA IS NOT YOU =>
+    BABA ON WALL IS WATER => 
+    BABA NEAR WALL IS 
+
+    BABA AND KEKE ON BABA AND KEY HAS FLAG;
+        Splits into 
+            BABA ON BABA AND KEY HAS FLAG;
+            KEKE ON BABA AND KEY HAS FLAG;
+                Condition: 
+                    ON 
+                        BABA &&
+                        KEY
+                Object:
+                    KEKE
+                Property: 
+                    HAS 
+                        FLAG
+
+    enum  
+        {
+        CONDITION_ON
+        }
+
+    struct Condition 
+        {
+        type = CONDITION_ON
+        id = BABA
+        negated = false
+        }
+
+    struct Rule 
+        {
+        vector<Condition> conditions;
+        }
+
+    struct Level 
+        {
+        vector<Rule> rules; 
+        }
+
+
+
+
+
+
+
+
+
+
+    -- ALL RULES CAN BE NEGATED --
+    struct Level 
+        {
+        struct 
+            {
+            BlockID key; 
+            BlockID is;
+            vector<Property> isProp;
+            vector<BlockID> has;
+            vector<BlockID> make;
+            operator== (key == key && is == is && isProp == isProp && )
+            }
+            rule, ruleNegate;
+
+        struct 
+            {
+
+            }
+        }
+
+    struct Rule 
+        {
+        BlockID key; 
+        BlockID is; // Transformation
+        vector<Property> isProp; // Property 
+        vector<BlockID> has;
+        vector<BlockID> make;
+
+
+        }
+
+ */
+
+enum ConditionType
+    {
+    CONDITION_ON,
+    CONDITION_FACING,
+    CONDITION_NEAR,
+    CONDITION_WITHOUT,
+    CONDITION_ABOVE,
+    CONDITION_BELOW,
+    CONDITION_FEELING, /* Argh!!!!! This ruins everything!!! */
+    CONDITION_LONELY,
+    CONDITION_IDLE,
+    CONDITION_POWERED,
+    CONDITION_OFTEN,
+    CONDITION_SELDOM,
+    CONDITION_NEVER, // This makes the entire rule invalid!
+    };
+
+enum OperatorType
+    {
+    OPERATOR_IS_NOUN,
+    OPERATOR_IS_PROPERTY,
+    OPERATOR_HAS,
+    OPERATOR_MAKE,
+    OPERATOR_FEAR,
+    OPERATOR_EAT,
+    OPERATOR_FOLLOW,
+    OPERATOR_MIMIC,
+    }
+
+struct Condition 
+    {
+    u32 type;
+    u32 related; /* could be BlockID or PropertyID */
+    u8 count; /* used to determine a count of condition, e.g. BABA NEAR KEKE AND KEKE IS WIN then count=2, as we need to be near 2 kekes */
+    bool negated;
+    };
+
+struct Rule 
+    {
+    u32 key; // Block ID 
+    u32 type; // OperatorType 
+    u32 target; // Noun or property (varies by type)
+    bool negated; // True when object is NOT whatever
+    vector<Condition> condition; // Conditions
+    };
+
+
+Tricky syntax 
+
+BABA FEELING PUSH IS WIN
+    Rule 
+        {
+        key => ID_BABA,
+        type => OPERATOR_IS_PROPERTY,
+        target => PROPERTY_WIN,
+        negated => false,
+        conditions => 
+            {
+            type => CONDITION_FEELING,
+            related => PROPERTY_PUSH,
+            count => 0, // Ignored
+            negated => false
+            }
+        }
+
+BABA AND KEKE ON BABA AND KEY HAS FLAG
+    Rule 
+        {
+        key => ID_BABA,
+        type => OPERATOR_HAS,
+        target => ID_FLAG,
+        negated => false,
+        conditions => 
+            {
+            type => CONDITION_ON,
+            related => ID_BABA,
+            count => 0, // Ignored
+            negated => false
+            },
+            {
+            type => CONDITION_ON,
+            related => ID_KEKE,
+            count => 0, // Ignored 
+            negated => false
+            }
+        },
+    Rule 
+        {
+        key => ID_KEKE,
+        type => OPERATOR_HAS,
+        target => ID_FLAG,
+        negated => false,
+        conditions => 
+            {
+            type => CONDITION_ON,
+            related => ID_BABA,
+            count => 0, // Ignored
+            negated => false
+            },
+            {
+            type => CONDITION_ON,
+            related => ID_KEKE,
+            count => 0, // Ignored 
+            negated => false
+            }
+        },
+
+
+BABA NOT ON NOT BABA AND TEXT AND NEAR ALL IS MOVE
+    // ... baba 
+
+
+BRICK NEAR KEKE AND KEKE AND KEKE IS DEFEAT
+    Conditions will just have count = 3
+
+NOT LONELY NOT BABA NEAR TILE IS WIN
+    Rule created for every object in the level 
+    New objects spawned = rule needs to run again 
+
+OFTEN AND NOT OFTEN KEKE IS YOU

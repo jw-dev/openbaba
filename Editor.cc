@@ -44,21 +44,36 @@ auto Editor::handleChangeSprite ( Level& level ) -> void
         }
     }
 
-auto Editor::doInput ( Level& level ) -> void
+auto Editor::handleSave (Level& level) -> void 
+    {
+    if ( m_input.pressed ( PRESSED_SAVE ))
+        {
+        std::ostringstream oss; 
+        oss << "Data/"
+            << level.id 
+            << ".txt";
+        level.save ( oss.str() );
+        std::cout << "Saved: " << oss.str () << std::endl;
+        }
+    }
+
+auto Editor::doInput ( Level& level ) -> bool
     {
     if ( m_input.pressed ( PRESSED_PAUSE )) 
         {
         m_paused = !m_paused;
+        level.tick();
         }
 
     if ( !m_paused )
         {
-        LevelDraw::doInput ( level );
-        return;
+        return LevelDraw::doInput ( level );
         }
 
     handleResize (level);
     handleChangeSprite (level);
+    handleSave (level);
+    return false;
     }
 
 auto Editor::drawExtra ( Level& level ) -> void
@@ -73,7 +88,7 @@ auto Editor::drawExtra ( Level& level ) -> void
         const u8 gridX = (mouseX - m_canvas.x) / m_canvas.cellSize;
         const u8 gridY = (mouseY - m_canvas.y) / m_canvas.cellSize;
 
-        Block block = makeBlockFromId ( currentBlock );
+        Block block = getBlock ( currentBlock );
         block.x = gridX;
         block.y = gridY;
         drawBlock ( block );
@@ -82,7 +97,18 @@ auto Editor::drawExtra ( Level& level ) -> void
             {
             // place new block down 
             level.blocks.push_back ( block );
-            level.flags |= LEVEL_FLAG::LEVEL_PARSE_WORDS;
+            level.flags |= LEVELFLAG_PARSEWORDS;
+            }
+        else if ( m_input.pressed ( PRESSED_RIGHTCLICK )) 
+            {
+            for ( int i = level.blocks.size() - 1; i >= 0; --i) 
+                {
+                Block& erase = level.blocks.at (i);
+                if ( erase.x == gridX && erase.y == gridY )
+                    {
+                    level.blocks.erase ( level.blocks.begin() + i );
+                    }
+                }
             }
         }
     }

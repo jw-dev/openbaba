@@ -45,6 +45,9 @@ auto Input::update () -> void
                     case SDL_BUTTON_LEFT: 
                         pressed |= PRESSED_LEFTCLICK;
                         break;
+                    case SDL_BUTTON_RIGHT: 
+                        pressed |= PRESSED_RIGHTCLICK;
+                        break;
                     default:
                         break;
                     }

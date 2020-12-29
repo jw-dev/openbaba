@@ -1,75 +1,44 @@
 #ifndef BLOCK_H
 #define BLOCK_H
 
-#include "Common.h"
+#include "Enums.h"
+#include <set>
 #include <vector>
 #include <stdexcept>
-#include <map>
-
-
-enum class BlockID 
-    {
-    EMPTY,
-    BABA,
-    IS,
-    YOU,
-    FLAG,
-    WIN,
-    ROCK,
-    PUSH,
-    STOP,
-    SINK,
-    };
-
-enum class BlockType 
-    {
-    ENTITY,
-    WORD,
-    };
-
-enum class Property: u64
-    {
-    YOU = 0x1,
-    PUSH = 0x2,
-    STOP = 0x4,
-    WIN = 0x8,
-    SINK = 0x10,
-    };
-
-static const std::map <BlockID, Property> mapBlockToProperty = 
-    {
-    std::make_pair ( BlockID::YOU, Property::YOU ),
-    std::make_pair ( BlockID::PUSH, Property::PUSH ),
-    std::make_pair ( BlockID::WIN, Property::WIN ),
-    std::make_pair ( BlockID::STOP, Property::STOP ),
-    std::make_pair ( BlockID::SINK, Property::SINK ),
-    };
 
 class Block 
     {
     public:
-        BlockID id; 
-        BlockType type;
+        std::string name;
+        u16 id;
+        u8 tile; 
         u8 x;
         u8 y;
-        Direction direction = Direction::RIGHT;
-        explicit Block (BlockID id, BlockType type);
-        auto addProp (Property p) -> void;
-        auto hasProp (Property p) const -> bool;
-        auto removeProp (Property p) -> void;
+        u8 direction;
+        bool rotation;
+
+        Block ( std::string name, u16 id, u8 tile, bool rotate=false );
+        auto addProp (u8 prop) -> void;
+        auto hasProp (u8 prop) const -> bool;
+        auto removeProp (u8 prop) -> void;
         auto removeAllProps () -> void;
 
         // Helper functions 
+        auto isEntity () const -> bool;
         auto isWord () const -> bool;
         auto isNoun () const -> bool;
-        auto isJoiner () const -> bool;
-        auto isProperty () const -> bool;
+        auto isCondition () const -> bool;
+        auto isOperator () const -> bool;
+        auto isProp () const -> bool;
+        auto isPrefix () const -> bool;
+        auto isInfix () const -> bool;
     private:
-        u64 m_props;
+        std::set <u8> m_props;
     };
 
-Block makeBlock (BlockID id, BlockType type, int x, int y);
-Block makeBlockFromId ( size_t id );
+Block makeBlock (u8 id, u8 tile); 
+Block makeBlock (u8 id, u8 tile, u8 x, u8 y);
+Block getBlock ( size_t index );
 size_t countBlocks ();
 
 #endif

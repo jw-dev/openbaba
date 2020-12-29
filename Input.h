@@ -24,6 +24,7 @@ enum Pressed: u32
     PRESSED_WIDTH_MINUS     = 0x1000,
     PRESSED_HEIGHT_PLUS     = 0x2000,
     PRESSED_HEIGHT_MINUS    = 0x4000,
+    PRESSED_SAVE            = 0x8000,
     };
 
 static const std::map <u32, u32> sdlkToBabaMap = 
@@ -38,6 +39,7 @@ static const std::map <u32, u32> sdlkToBabaMap =
     std::make_pair ( KEY_HEIGHT_PLUS, PRESSED_HEIGHT_PLUS ),
     std::make_pair ( KEY_HEIGHT_MINUS, PRESSED_HEIGHT_MINUS ),
     std::make_pair ( KEY_QUIT, PRESSED_QUIT ),
+    std::make_pair ( KEY_SAVE, PRESSED_SAVE ),
     };
 
 class Input 

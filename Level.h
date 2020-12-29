@@ -4,14 +4,12 @@
 #include <fstream>
 #include <iostream>
 #include <sstream> 
+#include <functional>
+#include <chrono>
 
 #include "Common.h"
 #include "Block.h"
-
-enum LEVEL_FLAG 
-    {
-    LEVEL_PARSE_WORDS = 0x1,
-    };
+#include "Rule.h"
 
 class Level 
     {
@@ -20,20 +18,22 @@ public:
     unsigned int frames; 
     std::string name;
     u8 width, height;
-    std::vector<Block> blocks;
-    u32 flags = LEVEL_PARSE_WORDS;
-    
+    u32 flags;
+    std::vector <Block> blocks;
+    std::vector <Rule> rules;
     Level (int id);
     auto load (const std::string& path) -> void;
     auto save (const std::string& path) -> void;
+    auto tryMove (Block& block, u8 direction) -> bool;
     auto tick () -> bool;
-    auto tryMove (Block& b, Direction d) -> bool;
-
 private:
-    auto checkWin () -> bool;
-    auto parseRules (BlockID id = BlockID::EMPTY) -> void;
-    auto applyRule (BlockID noun, Block& target) -> void;
-    auto hasBlockId ( u8 x, u8 y, BlockID id ) -> bool;
+    auto getRules () -> void;
+    auto addRule (Rule& rule) -> void;
+
+    auto doReset () -> void;
+    auto doTransformations () -> void;
+    auto doActions () -> void;
+    auto doWinConditions () -> void;
     };
 
 #endif 

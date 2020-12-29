@@ -1,14 +1,14 @@
 #include "Level.h" 
 
-Level::Level (int id) 
+Level::Level (int p_id) 
+  : id ( p_id ),
+    flags ( LEVELFLAG_PARSEWORDS )
     {
     std::ostringstream oss; 
     oss << "Data/"
         << id 
         << ".txt";
     load ( oss.str() );
-
-    parseRules ();
     }
 
 auto Level::load (const std::string& path) -> void
@@ -32,8 +32,8 @@ auto Level::load (const std::string& path) -> void
                    >> y
                    >> direction )
             {
-            Block block = makeBlock ( (BlockID) id, (BlockType) type, x, y );
-            block.direction = (Direction) direction;
+            Block block = makeBlock ( id, type, x, y );
+            block.direction = direction;
             blocks.push_back ( block );
             }
         width = (u8) theWidth;
@@ -45,7 +45,7 @@ auto Level::load (const std::string& path) -> void
         throw std::runtime_error ( "unable to open/read from file" );
         }
     // When loading a new level, we need to parse the rules 
-    flags |= LEVEL_PARSE_WORDS;
+    getRules ();
     }
 
 auto Level::save (const std::string& path) -> void
@@ -62,7 +62,7 @@ auto Level::save (const std::string& path) -> void
             {
             out << static_cast<int>(block.id)
                 << " "
-                << (int)block.type 
+                << (int)block.tile 
                 << " "
                 << (int)block.x
                 << " "
@@ -80,62 +80,53 @@ auto Level::save (const std::string& path) -> void
     out.close();
     }
 
-auto Level::tick() -> bool
+
+auto Level::tick () -> bool 
     {
-    if ( flags & LEVEL_PARSE_WORDS )
+    if ( flags & LEVELFLAG_PARSEWORDS )
         {
-        parseRules ();
+        rules.clear();
+        getRules ();
         }
-    return checkWin ();
+
+    // Reset object state
+    doReset ();
+
+    // Do transformations 
+    doTransformations ();
+
+    // Perform actions 
+    doActions ();
+
+    // Check for win 
+    doWinConditions ();
+
+    return flags & LEVELFLAG_WIN;
     }
 
-auto Level::checkWin () -> bool 
-    {
-    for (auto& you: blocks) 
-        {
-        // Check for overlapping "YOU" and "WIN". 
-        // This also handles the case where something that is "YOU" is also "WIN".
-        if (!you.isWord() && you.hasProp(Property::YOU))
-            {
-            // Check blocks on same space 
-            for (const auto& win: blocks) 
-                {
-                if ( win.x == you.x
-                  && win.y == you.y
-                  && win.hasProp ( Property::WIN )
-                  && !win.isWord ())
-                    {
-                    return true;
-                    }
-                }
-            }
-        }
-    return false;
-    }
-
-auto Level::tryMove ( Block& block, Direction dir ) -> bool
+auto Level::tryMove (Block& block, u8 dir) -> bool
     {
     u8 newX = block.x;
     u8 newY = block.y;
     switch (dir) 
         {
-        case Direction::UP: 
+        case DIRECTION_UP: 
             if (block.y == 0) return false;
             newY--;
             break;
-        case Direction::DOWN:
+        case DIRECTION_DOWN:
             if (block.y == height-1) return false;
             newY++;
             break;
-        case Direction::LEFT: 
+        case DIRECTION_LEFT: 
             if (block.x == 0) return false;
             newX--;
             break;
-        case Direction::RIGHT: 
+        case DIRECTION_RIGHT: 
             if (block.x == width-1) return false;
             newX++;
             break;
-        case Direction::NONE:
+        default:
             return false;
         }
     // no movement
@@ -148,9 +139,9 @@ auto Level::tryMove ( Block& block, Direction dir ) -> bool
         {
         if ( toMove.x == newX && toMove.y == newY) 
             {
-            if ( toMove.hasProp ( Property::STOP ))
+            if ( toMove.hasProp ( PROPERTY_STOP ))
                 return false; // Oops, we are stopped by that
-            else if ( toMove.hasProp ( Property::PUSH ))
+            else if ( toMove.hasProp ( PROPERTY_PUSH ))
                 {
                 bool moved = tryMove ( toMove, dir );
                 if (!moved)
@@ -158,85 +149,207 @@ auto Level::tryMove ( Block& block, Direction dir ) -> bool
                 }
             }
         }
-    if ( block.type == BlockType::WORD )
-        flags |= LEVEL_PARSE_WORDS;
+    if ( block.tile == TILE_WORD ) 
+        flags |= LEVELFLAG_PARSEWORDS;
     block.x = newX;
     block.y = newY;
     return true;
     }
 
-auto Level::hasBlockId ( u8 x, u8 y, BlockID id ) -> bool
+
+auto Level::getRules () -> void 
     {
-    for (const auto& block: blocks) 
-        {
-        if ( block.x == x && block.y == y && block.id == id)
-            return true;
-        }
-    return false;
-    }
+    // <CONDITION1,CONDITION2,> [NOUN] [OPERATOR<ARG>] [PROPERTY1<AND PROPERTY2<AND PROPERTYN...>]
+    // LONELY AND IDLE BABA NEAR KEKE IS DEFEAT AND WIN
+    // CONDITION: LONELY
+    // CONDITION: IDLE
+    // NOUN: BABA
+    // OPERATOR: NEAR [KEKE]
+    // PROPERTY: DEFEAT
+    // PROPERTY: WIN
+    const std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
-auto Level::parseRules ( BlockID id ) -> void 
-    {
-    // First remove all props 
-    // We should probably do better than this by "merging" props rather than remove and replace... 
-    for (Block& block: blocks)   
+    enum State: u8
         {
-        if (block.type == BlockType::ENTITY)
-            block.removeAllProps();
-        }
+        STATE_BEGIN,
+        STATE_NOUN,
+        STATE_OPERATOR,
+        STATE_PROPERTY,
+        STATE_FINISH,
+        STATE_ERROR,
+        };
 
-    for ( Block& noun: blocks )
+    for ( const auto& block: blocks )
         {
-        if ( !noun.isNoun() || (id != BlockID::EMPTY && noun.id != id) )
-            continue; 
+        // if ( ignore.find (pos) != ignore.end() )
+        //     continue; // block has already formed a rule
 
-        for (int x: { 0, 1 }) 
-            for (int y: { 0, 1 })
+        for ( u8 xInc: { 0 , 1 })
+            for ( u8 yInc: { 0, 1 })
                 {
-                if (x == y)
-                    continue;
-                if ( !hasBlockId ( noun.x + x, noun.y + y, BlockID::IS ) )
-                    continue;
+                if ( xInc == yInc ) continue;
+                
+                Rule rule;
+                rule.active = true;
 
-                // Noun is joining to something, let's get the next word and see what we can apply 
-                const u8 propX = noun.x + x*2; 
-                const u8 propY = noun.y + y*2; 
-                for (auto& prop: blocks) 
+                u8 x = block.x;
+                u8 y = block.y;
+                u8 state = STATE_BEGIN;
+                bool done = false;
+                for (;;)
                     {
-                    if ( !(prop.x == propX && prop.y == propY) )
-                        continue;
-
-                    const bool isProperty = prop.isProperty ();
-                    const bool isNoun = prop.isNoun ();
-                    if ( isProperty || isNoun )
+                    Block * block = nullptr; 
+                    // Find block in this position
+                    for ( Block& b : blocks )
                         {
-                        applyRule ( noun.id, prop );
-                        if (isNoun)
-                            parseRules ( prop.id );
+                        if ( b.x == x && b.y == y && b.isWord() )
+                            {
+                            block = &b;
+                            break;
+                            }
                         }
+                    if ( block == nullptr && state != STATE_PROPERTY && state != STATE_FINISH)
+                        state = STATE_ERROR;
+
+                    switch (state) 
+                        {
+                        case STATE_BEGIN: 
+                            if ( block->isNoun() )
+                                {
+                                rule.target = block->id;
+                                state = STATE_NOUN;
+                                }
+                            else 
+                                state = STATE_ERROR;
+                            break;
+                        case STATE_NOUN: 
+                            if ( block->isOperator() )
+                                {
+                                rule.op = block->id;
+                                state = STATE_OPERATOR;
+                                }
+                            else 
+                                state = STATE_ERROR;
+                            break;
+                        case STATE_OPERATOR: 
+                            if ( block->isNoun() ) 
+                                {
+                                rule.flags = TILE_ENTITY;
+                                rule.arg = block->id;
+                                state = STATE_PROPERTY;
+                                }
+                            else if ( block->isProp() ) 
+                                {
+                                rule.flags = TILE_WORD;
+                                rule.arg = block->id;
+                                state = STATE_PROPERTY;
+                                }
+                            else 
+                                state = STATE_ERROR;
+                            break;
+                        case STATE_PROPERTY:
+                            state = STATE_FINISH;
+                            break;
+                        case STATE_ERROR:
+                            done = true;
+                            break;
+                        case STATE_FINISH: 
+                            addRule ( rule );
+                            rule = Rule (); // reset
+                            done = true;
+                            break;
+                        }
+                    if ( done ) 
+                        break ;
+                    // printf ("   x %d, y %d, %s, state %d\n", x, y, block? block->name.c_str(): "<NULL>", state);
+                    x += xInc;
+                    y += yInc;
                     }
                 }
         }
+
+    const std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    std::cout << "parsing finished in " 
+              << std::chrono::duration_cast<std::chrono::milliseconds>(end-begin).count() 
+              << "ms ("
+              << std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count()
+              << "µs)" 
+              << std::endl; 
     }
 
-auto Level::applyRule (BlockID noun, Block& prop) -> void
+auto Level::addRule ( Rule& rule ) -> void 
     {
-    for (auto& block: blocks) 
+    for ( Rule& other: rules ) 
         {
-        if ( block.id == noun && block.type == BlockType::ENTITY ) 
+        if ( other.isNegationOf ( rule )) 
             {
-            if ( prop.isNoun() ) 
+            // We need to disable one of these rules. We should disable the one that is positive rule
+            // For example, if we have BABA IS YOU and BABA IS NOT YOU then BABA IS YOU should be disabled
+            if ( other.negated ) rule.active = false;
+            else other.active = false;
+            }
+        }
+    puts ( "   ===RULE ADDED===  ");
+    rules.push_back ( rule );
+    }
+
+auto Level::doReset () -> void
+    {
+    for ( auto& block: blocks ) 
+        {
+        if ( block.isEntity () )
+            {
+            block.removeAllProps ();
+            }
+        }
+    }
+
+auto Level::doTransformations () -> void
+    {
+    for ( auto& block: blocks ) 
+        {
+        if ( !block.isEntity() ) 
+            continue;
+
+        for ( const auto& rule: rules ) 
+            {
+            if ( !rule.active )
+                continue; 
+
+            if ( !(rule.op == WORD_IS && rule.flags == TILE_ENTITY) ) 
+                continue; 
+
+            if ( block.id == rule.target )
                 {
-                block.id = prop.id; 
-                block.removeAllProps ();
-                }
-            else if ( prop.isProperty() )
-                {
-                if ( mapBlockToProperty.find(prop.id) != mapBlockToProperty.end() )
-                    {
-                    block.addProp ( mapBlockToProperty.at (prop.id) );
-                    }
+                Block transform = makeBlock ( rule.arg, TILE_ENTITY );
+                block.id = transform.id;
+                block.name = transform.name;
+                block.rotation = transform.rotation;
+                break; // Do not transform more than once
                 }
             }
         }
+    }
+
+auto Level::doActions () -> void
+    {
+    for ( const auto& rule: rules ) 
+        {
+        if ( !rule.active )
+            continue;
+
+        if ( !(rule.op == WORD_IS && rule.flags == TILE_WORD) )
+            continue; 
+
+        for ( auto& block: blocks ) 
+            if ( block.isEntity() && block.id == rule.target) 
+                {
+                block.addProp ( rule.arg );
+                }
+        }
+    }
+
+auto Level::doWinConditions () -> void
+    {
+
     }

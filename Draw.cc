@@ -35,18 +35,12 @@ auto LevelDraw::getDirectionInput () const -> u8
 auto LevelDraw::doInput (Level& level) -> bool
     {
     u8 move = getDirectionInput ();
-    if ( move == DIRECTION_NONE ) 
-        return false;
-    for (auto& block: level.blocks)
+    if ( move != DIRECTION_NONE )
         {
-        if ( block.hasProp ( PROPERTY_YOU ))
-            {
-            bool moved = level.tryMove ( block, move );
-            if ( moved )
-                block.direction = move;
-            }
+        level.movement (move);
+        return true;
         }
-    return true;
+    return false;
     }
 
 auto LevelDraw::getTexture (TextureType type) -> SDL_Texture*

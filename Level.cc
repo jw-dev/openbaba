@@ -121,6 +121,33 @@ auto Level::canMove ( Block& block, u8 x, u8 y ) -> bool
     return true;
     }
 
+auto Level::movement ( u8 dir ) -> void 
+    {
+    std::vector <Block*> toMove; 
+
+    for ( auto& block: blocks )
+        if ( block.hasProp ( PROPERTY_YOU )) 
+            toMove.push_back (&block);
+
+    //We want to process the movement in the "opposite" direction of movement. 
+    //For example, if we are moving LEFT, then we should process movements LEFT->RIGHT, to prevent YOU targets from blocking each other.
+    std::sort ( toMove.begin(), toMove.end(), [&dir] (Block* a, Block* b) 
+        {
+        // return true;
+        switch ( dir )
+            {
+            case DIRECTION_LEFT:    return a->x < b->x; 
+            case DIRECTION_RIGHT:   return a->x > b->x;
+            case DIRECTION_UP:      return a->y < b->y; 
+            case DIRECTION_DOWN:    return a->y > b->y;
+            default:                return false;
+            }
+        });
+
+    for ( auto& block: toMove ) 
+        tryMove ( *block, dir );
+    }
+
 auto Level::tryMove (Block& block, u8 dir) -> bool
     {
     const u8 oldX = block.x; 
@@ -152,7 +179,14 @@ auto Level::tryMove (Block& block, u8 dir) -> bool
         {
         if ( (toMove.x == newX && toMove.y == newY ) )
             {
-            if ( !toMove.hasProp ( PROPERTY_YOU ) && ( toMove.hasProp ( PROPERTY_STOP ) || toMove.hasProp ( PROPERTY_PULL ) ) )
+            // Check SWAP
+            if ( toMove.hasProp ( PROPERTY_SWAP ) )
+                {
+                toMove.x = oldX;
+                toMove.y = oldY;
+                }
+
+            else if ( !toMove.hasProp ( PROPERTY_YOU ) && ( toMove.hasProp ( PROPERTY_STOP ) || toMove.hasProp ( PROPERTY_PULL ) ) )
                 return false; // Oops, we are stopped by that
 
             // Recursively check all PUSH blocks in the way and see if any of them are stopped 
@@ -165,6 +199,7 @@ auto Level::tryMove (Block& block, u8 dir) -> bool
     // Actually move now
     block.x = newX;
     block.y = newY;
+    block.direction = dir;
 
     // check all blocks that are PULL in the opposite direction of movement 
     u8 checkX = oldX;

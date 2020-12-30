@@ -6,6 +6,7 @@
 #include <sstream> 
 #include <functional>
 #include <chrono>
+#include <algorithm>
 
 #include "Common.h"
 #include "Block.h"
@@ -24,10 +25,12 @@ public:
     Level (int id);
     auto load (const std::string& path) -> void;
     auto save (const std::string& path) -> void;
-    auto tryMove (Block& block, u8 direction) -> bool;
+    auto movement (u8 movement) -> void;
     auto tick () -> bool;
 private:
+    auto tryMove (Block& block, u8 direction) -> bool;
     auto canMove ( Block& block, u8 x, u8 y ) -> bool;
+
     auto getRules () -> void;
     auto addRule (Rule& rule) -> void;
 

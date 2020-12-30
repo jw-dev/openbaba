@@ -27,6 +27,7 @@ public:
     auto tryMove (Block& block, u8 direction) -> bool;
     auto tick () -> bool;
 private:
+    auto canMove ( Block& block, u8 x, u8 y ) -> bool;
     auto getRules () -> void;
     auto addRule (Rule& rule) -> void;
 

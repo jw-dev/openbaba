@@ -104,58 +104,96 @@ auto Level::tick () -> bool
     return flags & LEVELFLAG_WIN;
     }
 
-auto Level::tryMove (Block& block, u8 dir) -> bool
+auto Level::canMove ( Block& block, u8 x, u8 y ) -> bool
     {
-    u8 newX = block.x;
-    u8 newY = block.y;
-    switch (dir) 
-        {
-        case DIRECTION_UP: 
-            if (block.y == 0) return false;
-            newY--;
-            break;
-        case DIRECTION_DOWN:
-            if (block.y == height-1) return false;
-            newY++;
-            break;
-        case DIRECTION_LEFT: 
-            if (block.x == 0) return false;
-            newX--;
-            break;
-        case DIRECTION_RIGHT: 
-            if (block.x == width-1) return false;
-            newX++;
-            break;
-        default:
-            return false;
-        }
-    // no movement
-    if (newX == block.x && newY == block.y) 
+    // No movement 
+    if ( block.x == x && block.y == y) 
         return false;
 
-    // check all blocks in the way, recursively - if any of them can't move then neither can we 
-    // std::vector< Block* > alsoToMove = getBlocks ( newX, newY );
-    for (auto& toMove: blocks) 
-        {
-        if ( toMove.x == newX && toMove.y == newY) 
-            {
-            if ( toMove.hasProp ( PROPERTY_STOP ))
-                return false; // Oops, we are stopped by that
-            else if ( toMove.hasProp ( PROPERTY_PUSH ))
-                {
-                bool moved = tryMove ( toMove, dir );
-                if (!moved)
-                    return false;
-                }
-            }
-        }
-    if ( block.tile == TILE_WORD ) 
-        flags |= LEVELFLAG_PARSEWORDS;
-    block.x = newX;
-    block.y = newY;
+    // Would move OOB - integer underflow
+    if ( (block.x == 0 && x == UINT8_MAX) || (block.y == 0 && y == UINT8_MAX) )
+        return false;
+
+    // Would move OOB - past height/width 
+    if ( x >= width || y >= height )
+        return false;
+
     return true;
     }
 
+auto Level::tryMove (Block& block, u8 dir) -> bool
+    {
+    const u8 oldX = block.x; 
+    const u8 oldY = block.y;
+    u8 newX = block.x;
+    u8 newY = block.y;
+
+    switch (dir) 
+        {
+        case DIRECTION_UP: 
+            newY--;
+            break;
+        case DIRECTION_DOWN: 
+            newY++;
+            break;
+        case DIRECTION_LEFT: 
+            newX--;
+            break;
+        case DIRECTION_RIGHT:
+            newX++;
+            break;
+        }
+
+    if ( !canMove (block, newX, newY) )
+        return false;
+
+    // check all blocks in the way, recursively - if any of them can't move then neither can we 
+    for ( auto& toMove: blocks )
+        {
+        if ( (toMove.x == newX && toMove.y == newY ) )
+            {
+            if ( !toMove.hasProp ( PROPERTY_YOU ) && ( toMove.hasProp ( PROPERTY_STOP ) || toMove.hasProp ( PROPERTY_PULL ) ) )
+                return false; // Oops, we are stopped by that
+
+            // Recursively check all PUSH blocks in the way and see if any of them are stopped 
+            else if ( toMove.hasProp ( PROPERTY_PUSH ) )
+                if ( !tryMove ( toMove, dir ) )
+                    return false;
+            }
+        }
+
+    // Actually move now
+    block.x = newX;
+    block.y = newY;
+
+    // check all blocks that are PULL in the opposite direction of movement 
+    u8 checkX = oldX;
+    u8 checkY = oldY; 
+    for ( ;; )
+        {
+        bool cont = false;
+        checkX += ( oldX - newX );
+        checkY += ( oldY - newY );
+        
+        for ( auto& check: blocks ) 
+            {
+            if ( check.x == checkX && check.y == checkY && check.hasProp ( PROPERTY_PULL ) )
+                {
+                check.x -= ( oldX - newX );
+                check.y -= ( oldY - newY );
+                cont = true;
+                }
+            }
+        if ( !cont )
+            break;
+        }   
+
+    // When moving words, reparse all tiles to find new potential rules 
+    if ( block.tile == TILE_WORD ) 
+        flags |= LEVELFLAG_PARSEWORDS;
+
+    return true;
+    }
 
 auto Level::getRules () -> void 
     {

@@ -4,6 +4,7 @@
 enum class ParticleType 
     {
     STARS,
+    BUBBLES,
     };
 
 struct Particle 

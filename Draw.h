@@ -46,6 +46,7 @@ protected:
     virtual auto doInput (Level& level) -> bool;
     virtual auto drawExtra (Level& level) -> void;
 
+    auto createParticleEffect (const Block& block, ParticleType type, unsigned frames, unsigned ticksPerFrame) -> void;
     auto getDirectionInput () const -> u8;
     auto refreshCanvas (const Level& level) -> void;
     auto drawBackground () -> void;

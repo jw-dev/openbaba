@@ -35,6 +35,7 @@ private:
     auto addRule (Rule& rule) -> void;
 
     auto doReset () -> void;
+    auto doMovements () -> void;
     auto doTransformations () -> void;
     auto doActions () -> void;
     auto doWinConditions () -> void;

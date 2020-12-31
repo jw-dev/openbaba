@@ -15,6 +15,7 @@ static const std::vector <Block> allBlocks =
     Block { "STOP", WORD_STOP, TILE_WORD },
     Block { "PULL", WORD_PULL, TILE_WORD },
     Block { "SWAP", WORD_SWAP, TILE_WORD },
+    Block { "TELE", WORD_TELE, TILE_WORD },
     };
 
 Block makeBlock (u8 id, u8 tile)

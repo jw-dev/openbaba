@@ -87,6 +87,7 @@ auto Level::tick () -> bool
         {
         rules.clear();
         getRules ();
+        flags &= ~LEVELFLAG_PARSEWORDS;
         }
 
     // Reset object state
@@ -97,6 +98,9 @@ auto Level::tick () -> bool
 
     // Perform actions 
     doActions ();
+
+    // Do movements (TELE, MOVE, SHIFT)
+    doMovements ();
 
     // Check for win 
     doWinConditions ();
@@ -373,6 +377,62 @@ auto Level::doReset () -> void
         if ( block.isEntity () )
             {
             block.removeAllProps ();
+            }
+        }
+    }
+
+auto Level::doMovements () -> void 
+    {
+    // Store all movements in here, so we don't accidentally teleport things more than once 
+    struct Tele  
+        {
+        Block& block; 
+        u8 x, y;
+        };
+    
+    std::vector<Tele> teleports;
+
+    const auto isTelePair = [] ( const Block& b1, const Block& b2 ) -> bool
+        {
+        return b1.isEntity () 
+            && b1.hasProp ( PROPERTY_TELE )
+            && b2.isEntity () 
+            && b2.hasProp ( PROPERTY_TELE )
+            && b1.id == b2.id 
+            && (b1.x != b2.x || b1.y != b2.y);
+        };
+
+    const auto doTele = [&] ( const Block& t1, const Block& t2 )
+        {
+        for ( auto& target: blocks )
+            {
+            if (!target.hasProp(PROPERTY_TELE) && ((target.x == t1.x && target.y == t1.y) || (target.x == t2.x && target.y == t2.y)))
+                {
+                teleports.push_back (Tele 
+                    {
+                    target, 
+                    target.x == t1.x? t2.x: t1.x,
+                    target.y == t1.y? t2.y: t1.y
+                    });
+                }
+            }
+        };
+
+    for ( const auto& tele1: blocks ) 
+        for ( const auto& tele2: blocks )
+            {
+            if ( isTelePair ( tele1, tele2 ) )
+                {
+                doTele ( tele1, tele2 );
+                }
+            }
+
+    if ( !teleports.empty() )
+        {
+        for ( auto& tele: teleports )
+            {
+            tele.block.x = tele.x;
+            tele.block.y = tele.y;
             }
         }
     }

@@ -128,9 +128,23 @@ auto LevelDraw::drawBlock ( const Block& block ) -> void
 
 auto LevelDraw::drawBlocks (const Level& level) -> void 
     {
-    for (const Block& block: level.blocks)
+    for ( auto i = level.blocks.crbegin(); i < level.blocks.crend(); ++i )
         {
-        drawBlock (block);
+        drawBlock ( *i );
+        }
+    }
+
+auto LevelDraw::createParticleEffect (const Block& block, ParticleType type, unsigned frames, unsigned ticksPerFrame) -> void
+    {
+    if ( m_random.rollOdds ( PARTICLE_SPAWN_CHANCE ) ) 
+        {
+        Particle p; 
+        p.x = (m_canvas.x + m_canvas.cellSize*block.x) + m_random.getRandomInt ( 0, m_canvas.cellSize );
+        p.y = (m_canvas.y + m_canvas.cellSize*block.y) + m_random.getRandomInt ( 0, m_canvas.cellSize );
+        p.type = type; 
+        p.frames = frames;
+        p.ticksPerFrame = ticksPerFrame;
+        m_particles.push_back ( p );
         }
     }
 
@@ -142,18 +156,10 @@ auto LevelDraw::drawParticleEffects (const Level& level) -> void
         {
         // todo move this into a vector of Properties -> Particles, with particle data
         if ( block.hasProp ( PROPERTY_WIN )) 
-            {
-            if ( m_random.rollOdds ( PARTICLE_SPAWN_CHANCE ) ) 
-                {
-                Particle p; 
-                p.x = (m_canvas.x + m_canvas.cellSize*block.x) + m_random.getRandomInt ( 0, m_canvas.cellSize );
-                p.y = (m_canvas.y + m_canvas.cellSize*block.y) + m_random.getRandomInt ( 0, m_canvas.cellSize );
-                p.type = ParticleType::STARS;
-                p.frames = 5;
-                p.ticksPerFrame = 10;
-                m_particles.push_back ( p );
-                }
-            }
+            createParticleEffect ( block, ParticleType::STARS, 5, 10 );
+
+        else if ( block.hasProp ( PROPERTY_TELE ))
+            createParticleEffect ( block, ParticleType::BUBBLES, 5, 10 );
         }
     // Manage existing particles
     for ( size_t i = 0; i < m_particles.size(); ++i ) 
@@ -203,7 +209,6 @@ auto LevelDraw::draw(Level& level) -> bool
         if (moved)
             win = level.tick(); 
         level.frames += 1;
-        level.flags = 0U;
         if ( level.frames % ANIMATION_TIMER == 0 )
             {
             m_animationFrame++;

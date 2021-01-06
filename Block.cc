@@ -55,10 +55,10 @@ Block::Block ( std::string p_name, u16 p_id, u8 p_tile, bool p_rotation )
   : name ( p_name ),
     id ( p_id ),
     tile ( p_tile ),
-    rotation ( p_rotation ),
     x ( 0 ),
     y ( 0 ),
     direction ( DIRECTION_RIGHT ),
+    rotation ( p_rotation ),
     m_props ()
     {
     if ( p_tile == TILE_WORD )
@@ -99,7 +99,7 @@ auto Block::isWord () const -> bool
 
 auto Block::isNoun () const -> bool 
     {
-    return id >= WORD_BABA && id < WORD_YOU;
+    return id < WORD_YOU;
     }
 
 auto Block::isProp () const -> bool 

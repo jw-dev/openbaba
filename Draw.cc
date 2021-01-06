@@ -1,228 +1,196 @@
 #include "Draw.h"
 
-LevelDraw::LevelDraw (const Input& input, const Window& win) 
-  : m_levelId (-1),
-    m_animationFrame (0U),
-    m_paused (false),
-    m_win (win),
-    m_input (input)
+namespace Level 
     {
-    m_textures [TextureType::PARTICLES] = win.openTexture (PARTICLE_TEXTURE_PATH);
-    m_textures [TextureType::SPRITES] = win.openTexture (SPRITE_TEXTURE_PATH);
-    m_textures [TextureType::WORDS] = win.openTexture (WORD_TEXTURE_PATH);
-    }
-
-LevelDraw::~LevelDraw ()
-    {
-    for ( auto& kv: m_textures )
+    Draw::Draw (Window& window)
+      : m_animationFrame (0U),
+        m_paused (false),
+        m_win (window)
         {
-        if ( kv.second )
+        m_textures [TextureType::PARTICLES] = m_win.openTexture (PARTICLE_TEXTURE_PATH);
+        m_textures [TextureType::SPRITES] = m_win.openTexture (SPRITE_TEXTURE_PATH);
+        m_textures [TextureType::WORDS] = m_win.openTexture (WORD_TEXTURE_PATH);
+        }
+
+    Draw::~Draw ()
+        {
+        for ( auto& kv: m_textures )
             {
-            SDL_DestroyTexture ( kv.second );
+            if ( kv.second )
+                {
+                SDL_DestroyTexture ( kv.second );
+                }
             }
         }
-    }
 
-auto LevelDraw::getDirectionInput () const -> u8 
-    {
-    if ( m_input.pressed (PRESSED_LEFT) )           return DIRECTION_LEFT;
-    else if ( m_input.pressed ( PRESSED_RIGHT ) )   return DIRECTION_RIGHT;
-    else if ( m_input.pressed ( PRESSED_UP ) )      return DIRECTION_UP;
-    else if ( m_input.pressed ( PRESSED_DOWN ) )    return DIRECTION_DOWN;
-    else                                            return DIRECTION_NONE;
-    }
-
-auto LevelDraw::doInput (Level& level) -> bool
-    {
-    u8 move = getDirectionInput ();
-    if ( move != DIRECTION_NONE )
+    auto Draw::getTexture (TextureType type) -> SDL_Texture*
         {
-        level.movement (move);
-        return true;
-        }
-    return false;
-    }
-
-auto LevelDraw::getTexture (TextureType type) -> SDL_Texture*
-    {
-    if ( m_textures.find(type) == m_textures.end() || m_textures.at(type) == nullptr )
-        {
-        throw std::runtime_error ( "texture has not been initialized" );
-        }
-    return m_textures.at(type);
-    }
-
-auto LevelDraw::refreshCanvas ( const Level& level ) -> void 
-    {
-    const int wWidth = m_win.width();
-    const int wHeight = m_win.height();
-    const int widthCellSize = (wWidth - PADDING) / level.width;
-    const int heightCellSize = (wHeight - PADDING) / level.height;
-    m_canvas.cellSize = widthCellSize < heightCellSize ? widthCellSize : heightCellSize;
-    m_canvas.width = m_canvas.cellSize * level.width;
-    m_canvas.height = m_canvas.cellSize * level.height;
-    m_canvas.x = (wWidth / 2) - (m_canvas.width / 2);
-    m_canvas.y = (wHeight / 2) - (m_canvas.height / 2);
-    }
-
-auto LevelDraw::drawBackground() -> void
-    {
-    m_win.brush ( 0, 21, 64 );
-    m_win.clear ();
-    }
-
-auto LevelDraw::drawCanvas() -> void
-    {
-    m_win.brush ( 0, 28, 87 );
-    m_win.drawFilledRect ( m_canvas.x, m_canvas.y, m_canvas.width, m_canvas.height);
-    }
-
-auto LevelDraw::drawGrid(const Level& level) -> void
-    {
-    m_win.brush ( 0, 49, 110 );
-    for (int column = 0; column <= level.width; ++column)
-        m_win.drawLine (m_canvas.x+column*m_canvas.cellSize, m_canvas.y, m_canvas.x+column*m_canvas.cellSize, m_canvas.y+m_canvas.height);
-    for (int row = 0; row <= level.height; ++row) 
-        m_win.drawLine (m_canvas.x, m_canvas.y+row*m_canvas.cellSize, m_canvas.x+m_canvas.width, m_canvas.y+row*m_canvas.cellSize);
-    }
-
-auto LevelDraw::drawBlock ( const Block& block ) -> void
-    {
-    SDL_Texture * texture;
-    SDL_Rect src, trg;
-    bool flipped = false;
-
-    if (block.tile == TILE_WORD)
-        {
-        src.x = SPRITE_SIZE*m_animationFrame;
-        src.w = SPRITE_SIZE;
-        src.y = block.id * SPRITE_SIZE;
-        src.h = SPRITE_SIZE;
-        texture = getTexture ( TextureType::WORDS );
-        }
-    else 
-        {
-        unsigned int frameAdd = 0U;
-        if (block.rotation)
+        if ( m_textures.find(type) == m_textures.end() || m_textures.at(type) == nullptr )
             {
-            frameAdd = block.direction;
-            if (block.direction == DIRECTION_LEFT)
-                {
-                frameAdd = 0;
-                flipped = true;
-                }
-            } 
-        
-        src.x = (frameAdd*SPRITE_SIZE)+(3*SPRITE_SIZE*m_animationFrame);
-        src.w = SPRITE_SIZE;
-        src.y = block.id * SPRITE_SIZE;
-        src.h = SPRITE_SIZE;
-        texture = getTexture ( TextureType::SPRITES );
+            throw std::runtime_error ( "texture has not been initialized" );
+            }
+        return m_textures.at(type);
         }
-    trg.x = m_canvas.x+block.x*m_canvas.cellSize;
-    trg.y = m_canvas.y+block.y*m_canvas.cellSize;
-    trg.w = m_canvas.cellSize;
-    trg.h = m_canvas.cellSize;
-    m_win.drawTexture(texture, &src, &trg, flipped);
-    }
 
-auto LevelDraw::drawBlocks (const Level& level) -> void 
-    {
-    for ( auto i = level.blocks.crbegin(); i < level.blocks.crend(); ++i )
+    auto Draw::refreshCanvas ( u8 width, u8 height ) -> void 
         {
-        drawBlock ( *i );
+        const unsigned padding = m_mode == DrawMode::EDIT ? PADDING * 5: PADDING;
+        const int wWidth = m_win.width();
+        const int wHeight = m_win.height();
+        const int widthCellSize = (wWidth - padding) / width;
+        const int heightCellSize = (wHeight - padding) / height;
+        m_canvas.cellSize = widthCellSize < heightCellSize ? widthCellSize : heightCellSize;
+        m_canvas.width = m_canvas.cellSize * width;
+        m_canvas.height = m_canvas.cellSize * height;
+        m_canvas.x = (wWidth / 2) - (m_canvas.width / 2);
+        m_canvas.y = (wHeight / 2) - (m_canvas.height / 2);
         }
-    }
 
-auto LevelDraw::createParticleEffect (const Block& block, ParticleType type, unsigned frames, unsigned ticksPerFrame) -> void
-    {
-    if ( m_random.rollOdds ( PARTICLE_SPAWN_CHANCE ) ) 
+    auto Draw::drawBackground() -> void
+        {
+        m_win.brush ( 0, 21, 64 );
+        m_win.clear ();
+        }
+
+    auto Draw::drawCanvas() -> void
+        {
+        m_win.brush ( 0, 28, 87 );
+        m_win.drawFilledRect ( m_canvas.x, m_canvas.y, m_canvas.width, m_canvas.height);
+        }
+
+    auto Draw::drawGrid (u8 width, u8 height) -> void
+        {
+        switch ( m_mode ) // Only draw grid in edit mode
+            {
+            case DrawMode::EDIT: 
+                m_win.brush ( 0, 49, 110 );
+                for (int column = 0; column <= width; ++column)
+                    m_win.drawLine (m_canvas.x+column*m_canvas.cellSize, m_canvas.y, m_canvas.x+column*m_canvas.cellSize, m_canvas.y+m_canvas.height);
+                for (int row = 0; row <= height; ++row) 
+                    m_win.drawLine (m_canvas.x, m_canvas.y+row*m_canvas.cellSize, m_canvas.x+m_canvas.width, m_canvas.y+row*m_canvas.cellSize);
+                break;
+            default:
+                break;
+            }
+        }
+
+    auto Draw::drawBlock ( const Block& block ) -> void
+        {
+        SDL_Texture * texture;
+        SDL_Rect src, trg;
+        bool flipped = false;
+
+        if (block.tile == TILE_WORD)
+            {
+            src.x = SPRITE_SIZE*m_animationFrame;
+            src.w = SPRITE_SIZE;
+            src.y = block.id * SPRITE_SIZE;
+            src.h = SPRITE_SIZE;
+            texture = getTexture ( TextureType::WORDS );
+            }
+        else 
+            {
+            unsigned int frameAdd = 0U;
+            if (block.rotation)
+                {
+                frameAdd = block.direction;
+                if (block.direction == DIRECTION_LEFT)
+                    {
+                    frameAdd = 0;
+                    flipped = true;
+                    }
+                } 
+            
+            src.x = (frameAdd*SPRITE_SIZE)+(3*SPRITE_SIZE*m_animationFrame);
+            src.w = SPRITE_SIZE;
+            src.y = block.id * SPRITE_SIZE;
+            src.h = SPRITE_SIZE;
+            texture = getTexture ( TextureType::SPRITES );
+            }
+        trg.x = m_canvas.x+block.x*m_canvas.cellSize;
+        trg.y = m_canvas.y+block.y*m_canvas.cellSize;
+        trg.w = m_canvas.cellSize;
+        trg.h = m_canvas.cellSize;
+        m_win.drawTexture(texture, &src, &trg, flipped);
+        }
+
+    auto Draw::drawBlocks (const std::vector<Block> &blocks) -> void 
+        {
+        for ( auto i = blocks.crbegin(); i < blocks.crend(); ++i )
+            {
+            drawBlock ( *i );
+            }
+        }
+
+    auto Draw::createParticles ( u8 x, u8 y, ParticleType type, unsigned frames, unsigned ticksPerFrame ) -> void
         {
         Particle p; 
-        p.x = (m_canvas.x + m_canvas.cellSize*block.x) + m_random.getRandomInt ( 0, m_canvas.cellSize );
-        p.y = (m_canvas.y + m_canvas.cellSize*block.y) + m_random.getRandomInt ( 0, m_canvas.cellSize );
+        p.x = (m_canvas.x + m_canvas.cellSize*x) + Random::getRandomInt ( 0, m_canvas.cellSize );
+        p.y = (m_canvas.y + m_canvas.cellSize*y) + Random::getRandomInt ( 0, m_canvas.cellSize );
         p.type = type; 
         p.frames = frames;
         p.ticksPerFrame = ticksPerFrame;
         m_particles.push_back ( p );
         }
-    }
 
-auto LevelDraw::drawParticleEffects (const Level& level) -> void
-    {   
-    SDL_Texture* texture = getTexture (TextureType::PARTICLES);
+    auto Draw::drawParticleEffects () -> void
+        {   
+        SDL_Texture* texture = getTexture (TextureType::PARTICLES);
 
-    for (const Block& block: level.blocks) 
-        {
-        // todo move this into a vector of Properties -> Particles, with particle data
-        if ( block.hasProp ( PROPERTY_WIN )) 
-            createParticleEffect ( block, ParticleType::STARS, 5, 10 );
-
-        else if ( block.hasProp ( PROPERTY_TELE ))
-            createParticleEffect ( block, ParticleType::BUBBLES, 5, 10 );
-        }
-    // Manage existing particles
-    for ( size_t i = 0; i < m_particles.size(); ++i ) 
-        {
-        Particle * part = &m_particles[i];
-        part->ticks++;
-        if (part->ticks % part->ticksPerFrame == 0) 
+        for ( size_t i = 0; i < m_particles.size(); ++i ) 
             {
-            part->currentFrame++;
-            if (part->currentFrame > part->frames) 
+            Particle * part = &m_particles[i];
+            part->ticks++;
+            if (part->ticks % part->ticksPerFrame == 0) 
                 {
-                m_particles.erase(m_particles.begin() + i);
-                continue;
+                part->currentFrame++;
+                if (part->currentFrame > part->frames) 
+                    {
+                    m_particles.erase(m_particles.begin() + i);
+                    continue;
+                    }
                 }
+            // Draw 
+            SDL_Rect src, trg; 
+            src.x = part->currentFrame * PARTICLE_SIZE;
+            src.y = (int)part->type * PARTICLE_SIZE;
+            src.w = PARTICLE_SIZE;
+            src.h = PARTICLE_SIZE;
+            trg.w = m_canvas.cellSize / 2;
+            trg.h = m_canvas.cellSize / 2;
+            trg.x = part->x - m_canvas.cellSize / 4;
+            trg.y = part->y - m_canvas.cellSize / 4;
+            m_win.drawTexture ( texture, &src, &trg, false );
             }
-        // Draw 
-        SDL_Rect src, trg; 
-        src.x = part->currentFrame * PARTICLE_SIZE;
-        src.y = (int)part->type * PARTICLE_SIZE;
-        src.w = PARTICLE_SIZE;
-        src.h = PARTICLE_SIZE;
-        trg.w = m_canvas.cellSize / 2;
-        trg.h = m_canvas.cellSize / 2;
-        trg.x = part->x - m_canvas.cellSize / 4;
-        trg.y = part->y - m_canvas.cellSize / 4;
-        m_win.drawTexture ( texture, &src, &trg, false );
-        }
-    }
-
-auto LevelDraw::drawExtra ( Level& level ) -> void
-    {
-    // Nothing
-    }
-
-auto LevelDraw::draw(Level& level) -> bool 
-    {
-    bool win = false;
-
-    if (m_levelId == -1 || level.id != m_levelId)
-        {
-        refreshCanvas(level);
         }
 
-    bool moved = doInput (level);
-    if ( !m_paused )
+    auto Draw::toggleMode () -> void
         {
-        if (moved)
-            win = level.tick(); 
-        level.frames += 1;
-        if ( level.frames % ANIMATION_TIMER == 0 )
+        m_mode = ( m_mode == DrawMode::EDIT ? DrawMode::GAME : DrawMode::EDIT );
+        }
+
+    auto Draw::drawEditorControls (const Input* input, Level* level) -> void
+        {
+        if ( m_mode != DrawMode::EDIT )
+            return;
+        }
+
+    auto Draw::draw (const Input* input, Level* level) -> void
+        {
+        if ( m_mode == DrawMode::GAME 
+          && level->frames % ANIMATION_TIMER == 0 )
             {
             m_animationFrame++;
             m_animationFrame%=3;
             }
+        m_win.clear ();
+        refreshCanvas ( level->width, level->height);
+        drawBackground ();
+        drawCanvas ();
+        drawGrid ( level->width, level->height );
+        drawBlocks ( level->blocks );
+        drawParticleEffects ();
+        drawEditorControls (input, level);
+        m_win.draw ();
         }
-
-    m_win.clear();
-    drawBackground ();
-    drawCanvas ();
-    drawGrid (level);
-    drawBlocks (level);
-    drawParticleEffects (level);
-    drawExtra ( level );
-    m_win.draw();
-    return win;
     }
